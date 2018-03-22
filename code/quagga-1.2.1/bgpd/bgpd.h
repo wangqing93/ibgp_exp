@@ -41,6 +41,7 @@ struct bgp_master
   /* work queues */
   struct work_queue *process_main_queue;
   struct work_queue *process_rsclient_queue;
+  struct work_queue *process_main_queue2;
   
   /* Listening sockets */
   struct list *listen_sockets;

@@ -1521,6 +1521,14 @@ struct bgp_process_queue
   safi_t safi;
 };
 
+struct bgp_process_queue2 
+{
+  struct bgp *bgp;
+  struct bgp_node *rn;
+  afi_t afi;
+  safi_t safi;
+  bgp_peer_sort_t sort;
+};
 static wq_item_status
 bgp_process_rsclient (struct work_queue *wq, void *data)
 {
@@ -1586,6 +1594,7 @@ bgp_process_rsclient (struct work_queue *wq, void *data)
 static wq_item_status
 bgp_process_main (struct work_queue *wq, void *data)
 {
+  zlog_info("bgp_route.c call bgp_process_main");
   struct bgp_process_queue *pq = data;
   struct bgp *bgp = pq->bgp;
   struct bgp_node *rn = pq->rn;
@@ -1598,6 +1607,7 @@ bgp_process_main (struct work_queue *wq, void *data)
   struct listnode *node, *nnode;
   struct peer *peer;
   
+  zlog_info("bgp_route.c file bgp_process_main func: start call bgp_best_selection");
   /* Best path selection. */
   bgp_best_selection (bgp, rn, &old_and_new, afi, safi);
   old_select = old_and_new.old;
@@ -1631,13 +1641,24 @@ bgp_process_main (struct work_queue *wq, void *data)
       UNSET_FLAG (new_select->flags, BGP_INFO_MULTIPATH_CHG);
     }
 
-
+   zlog_info("bgp_route.c file bgp_process_main func: start announce to other peer");
   /* Check each BGP peer. */
+  /*wq change mark start*/
   for (ALL_LIST_ELEMENTS (bgp->peer, node, nnode, peer))
     {
-      bgp_process_announce_selected (peer, new_select, rn, afi, safi);
+      //peer_sort(bgp->peer_self) == BGP_PEER_IBGP &&
+      if (peer_sort(peer) == BGP_PEER_EBGP)
+      {
+        zlog_info("BGP announce prefix which is to ebgp peer %s", peer->host);
+        bgp_process_announce_selected (peer, new_select, rn, afi, safi);
+      }
+      if (peer_sort(peer) == BGP_PEER_IBGP)
+      {
+        zlog_info("BGP announce prefix which is to ibgp peer %s", peer->host);
+        bgp_process_announce_selected (peer, new_select, rn, afi, safi);
+      }
     }
-
+  /*wq change mark end*/
   /* FIB update. */
   if ((safi == SAFI_UNICAST || safi == SAFI_MULTICAST) && (! bgp->name &&
       ! bgp_option_check (BGP_OPT_NO_FIB)))
@@ -1654,6 +1675,100 @@ bgp_process_main (struct work_queue *wq, void *data)
 	      && old_select->sub_type == BGP_ROUTE_NORMAL)
 	    bgp_zebra_withdraw (p, old_select, safi);
 	}
+    }
+    
+  /* Reap old select bgp_info, if it has been removed */
+  if (old_select && CHECK_FLAG (old_select->flags, BGP_INFO_REMOVED))
+    bgp_info_reap (rn, old_select);
+  
+  UNSET_FLAG (rn->flags, BGP_NODE_PROCESS_SCHEDULED);
+  return WQ_SUCCESS;
+}
+
+static wq_item_status
+bgp_process_main2 (struct work_queue *wq, void *data)
+{
+  zlog_info("bgp_route.c call bgp_process_main");
+  struct bgp_process_queue2 *pq = data;
+  struct bgp *bgp = pq->bgp;
+  struct bgp_node *rn = pq->rn;
+  afi_t afi = pq->afi;
+  safi_t safi = pq->safi;
+  struct prefix *p = &rn->p;
+  struct bgp_info *new_select;
+  struct bgp_info *old_select;
+  struct bgp_info_pair old_and_new;
+  struct listnode *node, *nnode;
+  struct peer *peer;
+  
+  zlog_info("bgp_route.c file bgp_process_main func: start call bgp_best_selection");
+  /* Best path selection. */
+  bgp_best_selection (bgp, rn, &old_and_new, afi, safi);
+  old_select = old_and_new.old;
+  new_select = old_and_new.new;
+
+  /* Nothing to do. */
+  if (old_select && old_select == new_select 
+      && !CHECK_FLAG(rn->flags, BGP_NODE_USER_CLEAR))
+    {
+      if (! CHECK_FLAG (old_select->flags, BGP_INFO_ATTR_CHANGED))
+        {
+          if (CHECK_FLAG (old_select->flags, BGP_INFO_IGP_CHANGED) ||
+        CHECK_FLAG (old_select->flags, BGP_INFO_MULTIPATH_CHG))
+            bgp_zebra_announce (p, old_select, bgp, safi);
+          
+    UNSET_FLAG (old_select->flags, BGP_INFO_MULTIPATH_CHG);
+          UNSET_FLAG (rn->flags, BGP_NODE_PROCESS_SCHEDULED);
+          return WQ_SUCCESS;
+        }
+    }
+
+  /* If the user did "clear ip bgp prefix x.x.x.x" this flag will be set */
+  UNSET_FLAG(rn->flags, BGP_NODE_USER_CLEAR);
+
+  if (old_select)
+    bgp_info_unset_flag (rn, old_select, BGP_INFO_SELECTED);
+  if (new_select)
+    {
+      bgp_info_set_flag (rn, new_select, BGP_INFO_SELECTED);
+      bgp_info_unset_flag (rn, new_select, BGP_INFO_ATTR_CHANGED);
+      UNSET_FLAG (new_select->flags, BGP_INFO_MULTIPATH_CHG);
+    }
+
+   zlog_info("bgp_route.c file bgp_process_main func: start announce to other peer");
+  /* Check each BGP peer. */
+  /*wq change mark start*/
+  for (ALL_LIST_ELEMENTS (bgp->peer, node, nnode, peer))
+    {
+      //peer_sort(bgp->peer_self) == BGP_PEER_IBGP &&
+      if (peer_sort(peer) == BGP_PEER_EBGP && pq->sort == BGP_PEER_IBGP)
+      {
+        zlog_info("BGP announce prefix which is to ebgp peer %s", peer->host);
+        bgp_process_announce_selected (peer, new_select, rn, afi, safi);
+      }
+      if (peer_sort(peer) == BGP_PEER_IBGP && pq->sort == BGP_PEER_EBGP)
+      {
+        zlog_info("BGP announce prefix which is to ibgp peer %s", peer->host);
+        bgp_process_announce_selected (peer, new_select, rn, afi, safi);
+      }
+    }
+  /*wq change mark end*/
+  /* FIB update. */
+  if ((safi == SAFI_UNICAST || safi == SAFI_MULTICAST) && (! bgp->name &&
+      ! bgp_option_check (BGP_OPT_NO_FIB)))
+    {
+      if (new_select 
+    && new_select->type == ZEBRA_ROUTE_BGP 
+    && new_select->sub_type == BGP_ROUTE_NORMAL)
+  bgp_zebra_announce (p, new_select, bgp, safi);
+      else
+  {
+    /* Withdraw the route from the kernel. */
+    if (old_select 
+        && old_select->type == ZEBRA_ROUTE_BGP
+        && old_select->sub_type == BGP_ROUTE_NORMAL)
+      bgp_zebra_withdraw (p, old_select, safi);
+  }
     }
     
   /* Reap old select bgp_info, if it has been removed */
@@ -1701,9 +1816,97 @@ bgp_process_queue_init (void)
   bm->process_rsclient_queue->spec.hold = 50;
 }
 
+static void
+bgp_process_queue_init2 (void)
+{
+  bm->process_main_queue
+    = work_queue_new (bm->master, "process_main_queue");
+  bm->process_rsclient_queue
+    = work_queue_new (bm->master, "process_rsclient_queue");
+  bm->process_main_queue2
+    = work_queue_new (bm->master, "process_main_queue2");
+  
+  if ( !(bm->process_main_queue && bm->process_rsclient_queue && bm->process_main_queue2) )
+    {
+      zlog_err ("%s: Failed to allocate work queue", __func__);
+      exit (1);
+    }
+  
+  bm->process_main_queue->spec.workfunc = &bgp_process_main;
+  bm->process_main_queue->spec.del_item_data = &bgp_processq_del;
+  bm->process_main_queue->spec.max_retries = 0;
+  bm->process_main_queue->spec.hold = 50;
+  
+  bm->process_rsclient_queue->spec.workfunc = &bgp_process_rsclient;
+  bm->process_rsclient_queue->spec.del_item_data = &bgp_processq_del;
+  bm->process_rsclient_queue->spec.max_retries = 0;
+  bm->process_rsclient_queue->spec.hold = 50;
+
+  bm->process_main_queue2->spec.workfunc = &bgp_process_main2;
+  bm->process_main_queue2->spec.del_item_data = &bgp_processq_del;
+  bm->process_main_queue2->spec.max_retries = 0;
+  bm->process_main_queue2->spec.hold = 50;
+}
+
+void
+bgp_process2 (struct bgp *bgp, struct bgp_node *rn, afi_t afi, safi_t safi, bgp_peer_sort_t sort)
+{
+  zlog_info("bgp_route.c file call bgp_process2");
+  struct bgp_process_queue2 *pqnode;
+  
+  /* already scheduled for processing? */
+  if (CHECK_FLAG (rn->flags, BGP_NODE_PROCESS_SCHEDULED))
+    return;
+  
+  if (rn->info == NULL)
+    {
+      /* XXX: Perhaps remove before next release, after we've flushed out
+       * any obvious cases
+       */
+      assert (rn->info != NULL);
+      char buf[PREFIX_STRLEN];
+      zlog_warn ("%s: Called for route_node %s with no routing entries!",
+                 __func__,
+                 prefix2str (&(bgp_node_to_rnode (rn)->p), buf, sizeof(buf)));
+      return;
+    }
+  
+  if ( (bm->process_main_queue == NULL) ||
+       (bm->process_rsclient_queue == NULL) || (bm->process_main_queue2 == NULL))
+    bgp_process_queue_init2 ();
+  
+  pqnode = XCALLOC (MTYPE_BGP_PROCESS_QUEUE, 
+                    sizeof (struct bgp_process_queue2));
+  if (!pqnode)
+    return;
+
+  /* all unlocked in bgp_processq_del */
+  bgp_table_lock (bgp_node_table (rn));
+  pqnode->rn = bgp_lock_node (rn);
+  pqnode->bgp = bgp;
+  bgp_lock (bgp);
+  pqnode->afi = afi;
+  pqnode->safi = safi;
+  pqnode->sort = sort;
+  
+  switch (bgp_node_table (rn)->type)
+    {
+      case BGP_TABLE_MAIN:
+        work_queue_add (bm->process_main_queue2, pqnode);
+        break;
+      case BGP_TABLE_RSCLIENT:
+        work_queue_add (bm->process_rsclient_queue, pqnode);
+        break;
+    }
+  
+  SET_FLAG (rn->flags, BGP_NODE_PROCESS_SCHEDULED);
+  return;
+}
+
 void
 bgp_process (struct bgp *bgp, struct bgp_node *rn, afi_t afi, safi_t safi)
 {
+  zlog_info("bgp_route.c file call bgp_process");
   struct bgp_process_queue *pqnode;
   
   /* already scheduled for processing? */
@@ -2187,13 +2390,19 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
       reason = "reflected from the same cluster;";
       goto  filtered;
     }
-
+    //zlog_info("start filter bgp_route 2200 %s", peer->sort);
+    zlog_info("start filter");
   /* Apply incoming filter.  */
-  if (bgp_input_filter (peer, p, attr, afi, safi) == FILTER_DENY)
+    if (peer_sort(peer) == BGP_PEER_EBGP) 
     {
-      reason = "filter;";
-      goto filtered;
+      zlog_info("EBGP peer need input filter");
+        if (bgp_input_filter (peer, p, attr, afi, safi) == FILTER_DENY)
+        {
+          reason = "filter;";
+          goto filtered;
+        }
     }
+  
 
   new_attr.extra = &new_extra;
   bgp_attr_dup (&new_attr, attr);
@@ -2202,12 +2411,17 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
    * NB: new_attr may now contain newly allocated values from route-map "set"
    * commands, so we need bgp_attr_flush in the error paths, until we intern
    * the attr (which takes over the memory references) */
-  if (bgp_input_modifier (peer, p, &new_attr, afi, safi) == RMAP_DENY)
-    {
-      reason = "route-map;";
-      bgp_attr_flush (&new_attr);
-      goto filtered;
-    }
+  if (peer_sort(peer) == BGP_PEER_EBGP) 
+  {
+      zlog_info("EBGP peer need input modifier");
+      if (bgp_input_modifier (peer, p, &new_attr, afi, safi) == RMAP_DENY)
+      {
+        reason = "route-map;";
+        bgp_attr_flush (&new_attr);
+        goto filtered;
+      }
+  }
+  
 
   /* IPv4 unicast next hop check.  */
   if (afi == AFI_IP && safi == SAFI_UNICAST)
@@ -2247,6 +2461,7 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 
 	      if (bgp_damp_update (ri, rn, afi, safi) != BGP_DAMP_SUPPRESSED)
 	        {
+            zlog_info("call bgp_aggregate_increment && bgp_process");
                   bgp_aggregate_increment (bgp, p, ri, afi, safi);
                   bgp_process (bgp, rn, afi, safi);
                 }
@@ -2263,6 +2478,7 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 	      /* graceful restart STALE flag unset. */
 	      if (CHECK_FLAG (ri->flags, BGP_INFO_STALE))
 		{
+      zlog_info("call bgp_info_unset_flag && bgp_process");
 		  bgp_info_unset_flag (rn, ri, BGP_INFO_STALE);
 		  bgp_process (bgp, rn, afi, safi);
 		}
@@ -2274,7 +2490,7 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 
 	  return 0;
 	}
-
+  zlog_info("start execute withdraw/announce");
       /* Withdraw/Announce before we fully processed the withdraw */
       if (CHECK_FLAG(ri->flags, BGP_INFO_REMOVED))
         {
@@ -2367,7 +2583,8 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 
       /* Process change. */
       bgp_aggregate_increment (bgp, p, ri, afi, safi);
-
+      
+      zlog_info("bgp_route.c file bgp_update_main main: call bgp_progress after Nexthop reachability check");
       bgp_process (bgp, rn, afi, safi);
       bgp_unlock_node (rn);
 
@@ -2430,9 +2647,10 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
      count exeed it. */
   if (bgp_maximum_prefix_overflow (peer, afi, safi, 0))
     return -1;
-
+  zlog_info("bgp_route.c file bgp_update_main main: call bgp_progress after bgp_maximum_prefix_overflow check");
+      
   /* Process change. */
-  bgp_process (bgp, rn, afi, safi);
+  bgp_process2 (bgp, rn, afi, safi, peer->sort);
 
   return 0;
 
@@ -2465,6 +2683,7 @@ bgp_update (struct peer *peer, struct prefix *p, struct attr *attr,
   struct bgp *bgp;
   int ret;
 
+  zlog_info("call bgp_update_main function");
   ret = bgp_update_main (peer, p, attr, afi, safi, type, sub_type, prd, tag,
           soft_reconfig);
 
@@ -2474,8 +2693,11 @@ bgp_update (struct peer *peer, struct prefix *p, struct attr *attr,
   for (ALL_LIST_ELEMENTS (bgp->rsclient, node, nnode, rsclient))
     {
       if (CHECK_FLAG (rsclient->af_flags[afi][safi], PEER_FLAG_RSERVER_CLIENT))
+      {
+        zlog_info("call bgp_update_rsclient function");
         bgp_update_rsclient (rsclient, afi, safi, attr, peer, p, type,
                 sub_type, prd, tag);
+      }
     }
 
   return ret;
@@ -3352,12 +3574,17 @@ bgp_nlri_parse_ip (struct peer *peer, struct attr *attr,
 
       /* Normal process. */
       if (attr)
-	ret = bgp_update (peer, &p, attr, packet->afi, packet->safi, 
-			  ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL, 0);
+      {
+          zlog_info("normal process 3366 bgp_update");
+          ret = bgp_update (peer, &p, attr, packet->afi, packet->safi, 
+            ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL, 0);
+      }
       else
-	ret = bgp_withdraw (peer, &p, attr, packet->afi, packet->safi, 
-			    ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL);
-
+      {
+          zlog_info("normal process 3372 bgp_withdraw");
+          ret = bgp_withdraw (peer, &p, attr, packet->afi, packet->safi,
+            ZEBRA_ROUTE_BGP, BGP_ROUTE_NORMAL, NULL, NULL);
+      }
       /* Address family configuration mismatch or maximum-prefix count
          overflow. */
       if (ret < 0)

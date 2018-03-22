@@ -1706,11 +1706,14 @@ bgp_nlri_parse (struct peer *peer, struct attr *attr, struct bgp_nlri *packet)
     {
       case SAFI_UNICAST:
       case SAFI_MULTICAST:
+        zlog_info("bgp_nlri_parse 1709 bgp_nlri_parse_ip");
         return bgp_nlri_parse_ip (peer, attr, packet);
       case SAFI_MPLS_VPN:
       case SAFI_MPLS_LABELED_VPN:
+        zlog_info("bgp_nlri_parse 1713 bgp_nlri_parse_vpn");
         return bgp_nlri_parse_vpn (peer, attr, packet);
       case SAFI_ENCAP:
+        zlog_info("bgp_nlri_parse 1716 bgp_nlri_parse_encap");
         return bgp_nlri_parse_encap (peer, attr, packet);
     }
   return -1;
@@ -1738,6 +1741,10 @@ bgp_update_receive (struct peer *peer, bgp_size_t size)
     NLRI_TYPE_MAX,
   };
   struct bgp_nlri nlris[NLRI_TYPE_MAX];
+
+  /*wq change mark start*/
+  zlog_info("bgp_packet.c file bgp_update_receive func: receive update package %s", peer->host);
+  /*wq change mark end*/
 
   /* Status must be Established. */
   if (peer->status != Established) 
@@ -1930,10 +1937,12 @@ bgp_update_receive (struct peer *peer, bgp_size_t size)
         {
           case NLRI_UPDATE:
           case NLRI_MP_UPDATE:
+            zlog_info("bgp_packet.c 1937 update bgp_nlri_parse");
             nlri_ret = bgp_nlri_parse (peer, NLRI_ATTR_ARG, &nlris[i]);
             break;
           case NLRI_WITHDRAW:
           case NLRI_MP_WITHDRAW:
+            zlog_info("bgp_packet.c 1942 withdraw bgp_nlri_parse");
             nlri_ret = bgp_nlri_parse (peer, NULL, &nlris[i]);
         }
       
@@ -2681,6 +2690,7 @@ bgp_read (struct thread *thread)
       break;
     case BGP_MSG_UPDATE:
       peer->readtime = bgp_recent_clock ();
+      zlog_info("call bgp update receive in bgp_read function");
       bgp_update_receive (peer, size);
       break;
     case BGP_MSG_NOTIFY:
