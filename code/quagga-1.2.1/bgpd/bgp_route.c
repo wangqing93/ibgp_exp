@@ -1528,6 +1528,7 @@ struct bgp_process_queue2
   afi_t afi;
   safi_t safi;
   bgp_peer_sort_t sort;
+  struct bgp_info *new;
 };
 static wq_item_status
 bgp_process_rsclient (struct work_queue *wq, void *data)
@@ -1701,12 +1702,14 @@ bgp_process_main2 (struct work_queue *wq, void *data)
   struct listnode *node, *nnode;
   struct peer *peer;
   
-  zlog_info("bgp_route.c file bgp_process_main func: start call bgp_best_selection");
+  zlog_info("bgp_route.c file bgp_process_main func: delete bgp_best_selection********");
   /* Best path selection. */
-  bgp_best_selection (bgp, rn, &old_and_new, afi, safi);
-  old_select = old_and_new.old;
-  new_select = old_and_new.new;
+  //bgp_best_selection (bgp, rn, &old_and_new, afi, safi);
+  //old_select = old_and_new.old;
+  //new_select = old_and_new.new;
 
+   old_select = NULL;
+   new_select = pq->new;
   /* Nothing to do. */
   if (old_select && old_select == new_select 
       && !CHECK_FLAG(rn->flags, BGP_NODE_USER_CLEAR))
@@ -1849,7 +1852,7 @@ bgp_process_queue_init2 (void)
 }
 
 void
-bgp_process2 (struct bgp *bgp, struct bgp_node *rn, afi_t afi, safi_t safi, bgp_peer_sort_t sort)
+bgp_process2 (struct bgp *bgp, struct bgp_node *rn, afi_t afi, safi_t safi, bgp_peer_sort_t sort, struct bgp_info *new)
 {
   zlog_info("bgp_route.c file call bgp_process2");
   struct bgp_process_queue2 *pqnode;
@@ -1888,6 +1891,7 @@ bgp_process2 (struct bgp *bgp, struct bgp_node *rn, afi_t afi, safi_t safi, bgp_
   pqnode->afi = afi;
   pqnode->safi = safi;
   pqnode->sort = sort;
+  pqnode->new = new;
   
   switch (bgp_node_table (rn)->type)
     {
@@ -2602,7 +2606,8 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 
   /* Make new BGP info. */
   new = info_make(type, sub_type, peer, attr_new, rn);
-
+ 
+  zlog_info("bgp_route.c file in bgp_update_main function: create bgp_info");
   /* Update MPLS tag. */
   if (safi == SAFI_MPLS_VPN)
     memcpy ((bgp_info_extra_get (new))->tag, tag, 3);
@@ -2637,7 +2642,7 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
   
   /* Register new BGP information. */
   bgp_info_add (rn, new);
-  
+  zlog_info("bgp_route.c file in bgp_update_main function: add bgp_info in bgp_node");
   /* route_node_get lock */
   bgp_unlock_node (rn);
 
@@ -2650,7 +2655,7 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
   zlog_info("bgp_route.c file bgp_update_main main: call bgp_progress after bgp_maximum_prefix_overflow check");
       
   /* Process change. */
-  bgp_process2 (bgp, rn, afi, safi, peer->sort);
+  bgp_process2 (bgp, rn, afi, safi, peer->sort, new);
 
   return 0;
 
