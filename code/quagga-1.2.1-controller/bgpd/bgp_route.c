@@ -2139,16 +2139,26 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
   bgp = peer->bgp;
   rn = bgp_afi_node_get (bgp->rib[afi][safi], afi, safi, p, prd);
   
+
+  zlog_info("*****bgp_route.c file bgp_update_main func: received from %s****", peer->host);
   /* When peer's soft reconfiguration enabled.  Record input packet in
      Adj-RIBs-In.  */
   if (! soft_reconfig && CHECK_FLAG (peer->af_flags[afi][safi], PEER_FLAG_SOFT_RECONFIG)
-      && peer != bgp->peer_self)
+      && peer != bgp->peer_self) {
+    zlog_info("*****bgp_route.c file bgp_update_main func: start call bgp_adj_in_set****");
     bgp_adj_in_set (rn, peer, attr);
+  }
+    
+
+  char buf1[BUFSIZ];
+  zlog_info("prefix %s info**********", inet_ntop (p->family, &p->u.prefix, buf1, BUFSIZ));
 
   /* Check previously received route. */
-  for (ri = rn->info; ri; ri = ri->next)
+  for (ri = rn->info; ri; ri = ri->next) {
+    zlog_info("from peer ip addr: %s", ri->peer->host);
     if (ri->peer == peer && ri->type == type && ri->sub_type == sub_type)
       break;
+  }
 
   /* AS path local-as loop check. */
   if (peer->change_local_as)
@@ -2383,6 +2393,7 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 	    p->prefixlen);
     }
 
+  zlog_info("make bgp_info : one route for someone prefix");
   /* Make new BGP info. */
   new = info_make(type, sub_type, peer, attr_new, rn);
 
