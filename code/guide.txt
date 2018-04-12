@@ -1,0 +1,2 @@
+./configure --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root
+

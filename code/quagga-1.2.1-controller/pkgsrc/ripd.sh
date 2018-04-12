@@ -6,7 +6,7 @@
 # REQUIRE: zebra
 ##
 
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/sbin:/usr/bin
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 export PATH
 
 if [ -f /etc/rc.subr ]
@@ -16,12 +16,12 @@ fi
 
 name="ripd"
 rcvar=$name
-required_files="/etc/quagga/${name}.conf"
-command="/usr/sbin/${name}"
+required_files="${prefix}/etc/${name}.conf"
+command="/usr/local/sbin/${name}"
 command_args="-d"
 
 start_precmd="zebra_precmd"
-socket_dir=/var/run/quagga
+socket_dir=${prefix}/var
 pidfile="${socket_dir}/${name}.pid"
 
 zebra_precmd()

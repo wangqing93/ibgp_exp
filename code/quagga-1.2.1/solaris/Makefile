@@ -127,13 +127,13 @@ am__can_run_installinfo = \
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/missing aclocal-1.15
+ACLOCAL = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/missing autoconf
-AUTOHEADER = ${SHELL} /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/missing autoheader
-AUTOMAKE = ${SHELL} /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/missing automake-1.15
+AUTOCONF = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/missing autoconf
+AUTOHEADER = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/missing autoheader
+AUTOMAKE = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/missing automake-1.15
 AWK = gawk
 BGPD = bgpd
 CARES_CFLAGS = -I/usr/local/include
@@ -141,8 +141,8 @@ CARES_LIBS = -L/usr/local/lib -lcares
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -g -Os -fstack-protector-strong --param=ssp-buffer-size=4 -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -fpie -fno-omit-frame-pointer -Wall -Wextra -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wbad-function-cast -Wwrite-strings -Wno-unused-result -Wno-unused-parameter -Wno-missing-field-initializers
-CONFDATE = 20180411
-CONFIG_ARGS = --prefix=/usr --sysconfdir=/etc/quagga --localstatedir=/var/run/quagga --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --no-create --no-recursion
+CONFDATE = 20180412
+CONFIG_ARGS = --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --no-create --no-recursion
 CPP = gcc -E
 CPPFLAGS = 
 CURSES = 
@@ -191,7 +191,7 @@ LIPO =
 LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
-MAKEINFO = ${SHELL} /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/missing makeinfo
+MAKEINFO = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NETSNMP_CONFIG = 
@@ -242,10 +242,10 @@ WEAK_ALIAS = pragma
 WEAK_ALIAS_CROSSFILE = yes
 WERROR = 
 ZEBRA = zebra
-abs_builddir = /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/solaris
-abs_srcdir = /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/solaris
-abs_top_builddir = /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller
-abs_top_srcdir = /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller
+abs_builddir = /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris
+abs_srcdir = /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris
+abs_top_builddir = /home/wq/Documents/ibgp_exp/code/quagga-1.2.1
+abs_top_srcdir = /home/wq/Documents/ibgp_exp/code/quagga-1.2.1
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -268,7 +268,7 @@ dvidir = ${docdir}
 enable_group = root
 enable_user = root
 enable_vty_group = root
-exampledir = /etc/quagga
+exampledir = ${prefix}/etc
 exec_prefix = ${prefix}
 host = x86_64-unknown-linux-gnu
 host_alias = 
@@ -278,26 +278,26 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/install-sh
+install_sh = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
-localstatedir = /var/run/quagga
+localstatedir = ${prefix}/var
 mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
 pkgsrcdir = 
 pkgsrcrcdir = 
-prefix = /usr
+prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
-quagga_statedir = /var/run/quagga
+quagga_statedir = /var/run
 runstatedir = ${localstatedir}/run
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 srcdir = .
-sysconfdir = /etc/quagga
+sysconfdir = ${prefix}/etc
 target = x86_64-unknown-linux-gnu
 target_alias = 
 target_cpu = x86_64
@@ -311,7 +311,7 @@ top_srcdir = ..
 # derived variables.
 pkg_names = daemons dev doc libs smf
 pkg_quagga_daemons = zebra bgpd ospfd ospf6d ripd ripngd
-pkg_name_rev = 1.2.1-20180411-linux-gnu-x86_64
+pkg_name_rev = 1.2.1-20180412-linux-gnu-x86_64
 pkg_depends = $(pkg_names:%=depend.%)
 pkg_packages = $(pkg_names:%=quagga-%-$(pkg_name_rev).pkg)
 pkg_pkginfos = $(pkg_names:%=pkginfo.%.full)
@@ -343,28 +343,28 @@ edit = $(SED) \
  	-e 's,[@]PACKAGE_TARNAME[@],quagga,g' \
  	-e 's,[@]PACKAGE_VERSION[@],1.2.1,g' \
  	-e 's,[@]PACKAGE_BUGREPORT[@],https://bugzilla.quagga.net,g' \
-  	-e 's,[@]CONFDATE[@],20180411,g' \
+  	-e 's,[@]CONFDATE[@],20180412,g' \
  	-e 's,[@]target_cpu[@],$(target_cpu),g' \
  	-e 's,[@]target_host[@],$(target_host),g' \
  	-e 's,[@]target_os[@],$(target_os),g'
 
 
 # common options for pkgmk
-pkg_make_vars = exec_prefix=${prefix} prefix=/usr \
+pkg_make_vars = exec_prefix=${prefix} prefix=/usr/local \
 	builddir=. srcdir=. \
 	top_builddir=.. top_srcdir=.. \
-	abs_builddir=/home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/solaris abs_srcdir=/home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/solaris \
-	abs_top_builddir=/home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller abs_top_srcdir=/home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller
+	abs_builddir=/home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris abs_srcdir=/home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris \
+	abs_top_builddir=/home/wq/Documents/ibgp_exp/code/quagga-1.2.1 abs_top_srcdir=/home/wq/Documents/ibgp_exp/code/quagga-1.2.1
 
 
 # pkgmk: write the package to spool in build dir, to avoid root dependencies
-pkg_make = pkgmk -o -d /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/solaris \
+pkg_make = pkgmk -o -d /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris \
 	-f $< DESTDIR="$(DESTDIR)/" $(pkg_make_vars)
 
 
 # pkgtrans: write a pkg file stream, shame we cant pipe directly to it from
 # pkgmk..
-pkg_trans = pkgtrans -s /home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/solaris "/home/wq/Documents/code/ibgp_exp/code/quagga-1.2.1-controller/solaris/$@"
+pkg_trans = pkgtrans -s /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris "/home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris/$@"
 
 # pkginfo.package and prototype.package are all built sources
 #BUILT_SOURCES = pkginfo.daemons pkginfo.dev pkginfo.doc pkginfo.libs \
