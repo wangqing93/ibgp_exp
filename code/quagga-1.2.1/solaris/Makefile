@@ -141,7 +141,7 @@ CARES_LIBS = -L/usr/local/lib -lcares
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -g -Os -fstack-protector-strong --param=ssp-buffer-size=4 -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -fpie -fno-omit-frame-pointer -Wall -Wextra -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wbad-function-cast -Wwrite-strings -Wno-unused-result -Wno-unused-parameter -Wno-missing-field-initializers
-CONFDATE = 20180410
+CONFDATE = 20180412
 CONFIG_ARGS = --prefix=/usr --sysconfdir=/etc/quagga --localstatedir=/var/run/quagga --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --no-create --no-recursion
 CPP = gcc -E
 CPPFLAGS = 
@@ -311,7 +311,7 @@ top_srcdir = ..
 # derived variables.
 pkg_names = daemons dev doc libs smf
 pkg_quagga_daemons = zebra bgpd ospfd ospf6d ripd ripngd
-pkg_name_rev = 1.2.1-20180410-linux-gnu-x86_64
+pkg_name_rev = 1.2.1-20180412-linux-gnu-x86_64
 pkg_depends = $(pkg_names:%=depend.%)
 pkg_packages = $(pkg_names:%=quagga-%-$(pkg_name_rev).pkg)
 pkg_pkginfos = $(pkg_names:%=pkginfo.%.full)
@@ -343,7 +343,7 @@ edit = $(SED) \
  	-e 's,[@]PACKAGE_TARNAME[@],quagga,g' \
  	-e 's,[@]PACKAGE_VERSION[@],1.2.1,g' \
  	-e 's,[@]PACKAGE_BUGREPORT[@],https://bugzilla.quagga.net,g' \
-  	-e 's,[@]CONFDATE[@],20180410,g' \
+  	-e 's,[@]CONFDATE[@],20180412,g' \
  	-e 's,[@]target_cpu[@],$(target_cpu),g' \
  	-e 's,[@]target_host[@],$(target_host),g' \
  	-e 's,[@]target_os[@],$(target_os),g'

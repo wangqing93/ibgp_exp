@@ -340,20 +340,23 @@ bgp_adj_in_set (struct bgp_node *rn, struct peer *peer, struct attr *attr)
   char buf[BUFSIZ];
   struct prefix *p = &(rn->p); 
   zlog_info("bgp_advertise.c file call bgp_adj_in_set function");
-  zlog_info("prefix %s info**********", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ));
+  zlog_info("prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
   for (adj = rn->adj_in; adj; adj = adj->next)
     {
       if (adj->peer == peer)
 	{
-	  if (adj->attr != attr)
+	  if (adj->attr == attr)
 	    {
-        zlog_info("existed peer %s but need to update attr**********", peer->host);
+        zlog_info("peer and attr are both same");
+        return;
+        /*zlog_info("existed peer %s but need to update attr**********", peer->host);
         zlog_info("old attr aspath: %s **********", aspath_print(adj->attr->aspath));
 	      bgp_attr_unintern (&adj->attr);
 	      adj->attr = bgp_attr_intern (attr);
-        zlog_info("new attr aspath: %s **********", aspath_print(attr->aspath));
+        zlog_info("new attr aspath: %s **********", aspath_print(attr->aspath));*/
 	    }
-	  return;
+      //return;
+	  
 	}
     }
   adj = XCALLOC (MTYPE_BGP_ADJ_IN, sizeof (struct bgp_adj_in));

@@ -1704,6 +1704,7 @@ bgp_process_queue_init (void)
 void
 bgp_process (struct bgp *bgp, struct bgp_node *rn, afi_t afi, safi_t safi)
 {
+  zlog_info("bgp_route.c file bgp_process func");
   struct bgp_process_queue *pqnode;
   
   /* already scheduled for processing? */
@@ -2144,17 +2145,19 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
   /* When peer's soft reconfiguration enabled.  Record input packet in
      Adj-RIBs-In.  */
   if (! soft_reconfig && CHECK_FLAG (peer->af_flags[afi][safi], PEER_FLAG_SOFT_RECONFIG)
-      && peer != bgp->peer_self) {
+      && peer != bgp->peer_self) 
+  {
     zlog_info("*****bgp_route.c file bgp_update_main func: start call bgp_adj_in_set****");
     bgp_adj_in_set (rn, peer, attr);
   }
     
 
   char buf1[BUFSIZ];
-  zlog_info("prefix %s info**********", inet_ntop (p->family, &p->u.prefix, buf1, BUFSIZ));
+  //zlog_info("prefix %s info**********", inet_ntop (p->family, &p->u.prefix, buf1, BUFSIZ));
 
   /* Check previously received route. */
-  for (ri = rn->info; ri; ri = ri->next) {
+  for (ri = rn->info; ri; ri = ri->next) 
+  {
     zlog_info("from peer ip addr: %s", ri->peer->host);
     if (ri->peer == peer && ri->type == type && ri->sub_type == sub_type)
       break;
@@ -2162,48 +2165,49 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 
   /* AS path local-as loop check. */
   if (peer->change_local_as)
-    {
-      if (! CHECK_FLAG (peer->flags, PEER_FLAG_LOCAL_AS_NO_PREPEND))
-	aspath_loop_count = 1;
+  {
+    if (! CHECK_FLAG (peer->flags, PEER_FLAG_LOCAL_AS_NO_PREPEND))
+	    aspath_loop_count = 1;
 
       if (aspath_loop_check (attr->aspath, peer->change_local_as) > aspath_loop_count) 
-	{
-	  reason = "as-path contains our own AS;";
-	  goto filtered;
-	}
-    }
+	    {
+	      reason = "as-path contains our own AS;";
+	      goto filtered;
+	    }
+  }
 
   /* AS path loop check. */
   if (aspath_loop_check (attr->aspath, bgp->as) > peer->allowas_in[afi][safi]
       || (CHECK_FLAG(bgp->config, BGP_CONFIG_CONFEDERATION)
 	  && aspath_loop_check(attr->aspath, bgp->confed_id)
 	  > peer->allowas_in[afi][safi]))
-    {
-      reason = "as-path contains our own AS;";
-      goto filtered;
-    }
+  {
+    reason = "as-path contains our own AS;";
+    goto filtered;
+  }
 
   /* Route reflector originator ID check.  */
   if (attr->flag & ATTR_FLAG_BIT (BGP_ATTR_ORIGINATOR_ID)
       && IPV4_ADDR_SAME (&bgp->router_id, &attr->extra->originator_id))
-    {
-      reason = "originator is us;";
-      goto filtered;
-    }
+  {
+    reason = "originator is us;";
+    goto filtered;
+  }
 
   /* Route reflector cluster ID check.  */
   if (bgp_cluster_filter (peer, attr))
-    {
-      reason = "reflected from the same cluster;";
-      goto  filtered;
-    }
+  {
+    reason = "reflected from the same cluster;";
+    goto  filtered;
+  }
 
+  zlog_info("before bgp_input_filter, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
   /* Apply incoming filter.  */
   if (bgp_input_filter (peer, p, attr, afi, safi) == FILTER_DENY)
-    {
-      reason = "filter;";
-      goto filtered;
-    }
+  {
+    reason = "filter;";
+    goto filtered;
+  }
 
   new_attr.extra = &new_extra;
   bgp_attr_dup (&new_attr, attr);
@@ -2213,185 +2217,194 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
    * commands, so we need bgp_attr_flush in the error paths, until we intern
    * the attr (which takes over the memory references) */
   if (bgp_input_modifier (peer, p, &new_attr, afi, safi) == RMAP_DENY)
-    {
-      reason = "route-map;";
-      bgp_attr_flush (&new_attr);
-      goto filtered;
-    }
+  {
+    reason = "route-map;";
+    bgp_attr_flush (&new_attr);
+    goto filtered;
+  }
+
+  zlog_info("after bgp_input_modifier, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
+  
 
   /* IPv4 unicast next hop check.  */
   if (afi == AFI_IP && safi == SAFI_UNICAST)
-    {
+  {
       /* Next hop must not be 0.0.0.0 nor Class D/E address. Next hop
 	 must not be my own address.  */
-      if (new_attr.nexthop.s_addr == 0
+    if (new_attr.nexthop.s_addr == 0
 	  || IPV4_CLASS_DE (ntohl (new_attr.nexthop.s_addr))
 	  || bgp_nexthop_self (&new_attr))
-	{
-	  reason = "martian next-hop;";
-	  bgp_attr_flush (&new_attr);
-	  goto filtered;
-	}
-    }
+	  {
+	    reason = "martian next-hop;";
+	    bgp_attr_flush (&new_attr);
+	    goto filtered;
+	  }
+  }
+
+  zlog_info("after IPv4 unicast next hop check, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
+  
 
   attr_new = bgp_attr_intern (&new_attr);
 
   /* If the update is implicit withdraw. */
   if (ri)
-    {
-      ri->uptime = bgp_clock ();
+  {
+    ri->uptime = bgp_clock ();
 
       /* Same attribute comes in. */
-      if (!CHECK_FLAG (ri->flags, BGP_INFO_REMOVED) 
+    if (!CHECK_FLAG (ri->flags, BGP_INFO_REMOVED) 
           && attrhash_cmp (ri->attr, attr_new))
-	{
-	  if (CHECK_FLAG (bgp->af_flags[afi][safi], BGP_CONFIG_DAMPENING)
+	  {
+	    if (CHECK_FLAG (bgp->af_flags[afi][safi], BGP_CONFIG_DAMPENING)
 	      && peer->sort == BGP_PEER_EBGP
 	      && CHECK_FLAG (ri->flags, BGP_INFO_HISTORY))
 	    {
 	      if (BGP_DEBUG (update, UPDATE_IN))  
-		  zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d",
-		  peer->host,
-		  inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN),
-		  p->prefixlen);
+		      zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d",
+		    peer->host,inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN), p->prefixlen);
 
 	      if (bgp_damp_update (ri, rn, afi, safi) != BGP_DAMP_SUPPRESSED)
-	        {
-                  bgp_aggregate_increment (bgp, p, ri, afi, safi);
-                  bgp_process (bgp, rn, afi, safi);
-                }
+	      {
+          bgp_aggregate_increment (bgp, p, ri, afi, safi);
+          bgp_process (bgp, rn, afi, safi);
+        }
 	    }
-          else /* Duplicate - odd */
+      else /* Duplicate - odd */
 	    {
 	      if (BGP_DEBUG (update, UPDATE_IN))  
-		zlog (peer->log, LOG_DEBUG,
-		"%s rcvd %s/%d...duplicate ignored",
-		peer->host,
-		inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN),
-		p->prefixlen);
+		      zlog (peer->log, LOG_DEBUG,"%s rcvd %s/%d...duplicate ignored",
+		      peer->host,inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN), p->prefixlen);
 
 	      /* graceful restart STALE flag unset. */
 	      if (CHECK_FLAG (ri->flags, BGP_INFO_STALE))
-		{
-		  bgp_info_unset_flag (rn, ri, BGP_INFO_STALE);
-		  bgp_process (bgp, rn, afi, safi);
-		}
+		    {
+		      bgp_info_unset_flag (rn, ri, BGP_INFO_STALE);
+		      bgp_process (bgp, rn, afi, safi);
+		    }
 	    }
+      bgp_unlock_node (rn);
+	    bgp_attr_unintern (&attr_new);
+      bgp_attr_flush (&new_attr);
+      return 0;
+	  }
 
-	  bgp_unlock_node (rn);
-	  bgp_attr_unintern (&attr_new);
-          bgp_attr_flush (&new_attr);
-
-	  return 0;
-	}
+    zlog_info("after same attr come in, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
+  
 
       /* Withdraw/Announce before we fully processed the withdraw */
-      if (CHECK_FLAG(ri->flags, BGP_INFO_REMOVED))
-        {
-          if (BGP_DEBUG (update, UPDATE_IN))
-            zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d, flapped quicker than processing",
-            peer->host,
-            inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN),
+    if (CHECK_FLAG(ri->flags, BGP_INFO_REMOVED))
+    {
+      if (BGP_DEBUG (update, UPDATE_IN))
+        zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d, flapped quicker than processing",
+            peer->host,inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN),
             p->prefixlen);
-          bgp_info_restore (rn, ri);
-        }
-
+        bgp_info_restore (rn, ri);
+    }
+    
       /* Received Logging. */
-      if (BGP_DEBUG (update, UPDATE_IN))  
-	zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d",
-	      peer->host,
-	      inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN),
+    if (BGP_DEBUG (update, UPDATE_IN))  
+	    zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d",
+	      peer->host,inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN),
 	      p->prefixlen);
-
       /* graceful restart STALE flag unset. */
-      if (CHECK_FLAG (ri->flags, BGP_INFO_STALE))
-	bgp_info_unset_flag (rn, ri, BGP_INFO_STALE);
+    if (CHECK_FLAG (ri->flags, BGP_INFO_STALE))
+	    bgp_info_unset_flag (rn, ri, BGP_INFO_STALE);
 
       /* The attribute is changed. */
-      bgp_info_set_flag (rn, ri, BGP_INFO_ATTR_CHANGED);
+    bgp_info_set_flag (rn, ri, BGP_INFO_ATTR_CHANGED);
       
       /* implicit withdraw, decrement aggregate and pcount here.
        * only if update is accepted, they'll increment below.
        */
-      bgp_aggregate_decrement (bgp, p, ri, afi, safi);
+    bgp_aggregate_decrement (bgp, p, ri, afi, safi);
       
       /* Update bgp route dampening information.  */
-      if (CHECK_FLAG (bgp->af_flags[afi][safi], BGP_CONFIG_DAMPENING)
+    if (CHECK_FLAG (bgp->af_flags[afi][safi], BGP_CONFIG_DAMPENING)
 	  && peer->sort == BGP_PEER_EBGP)
-	{
+	  {
 	  /* This is implicit withdraw so we should update dampening
 	     information.  */
-	  if (! CHECK_FLAG (ri->flags, BGP_INFO_HISTORY))
-	    bgp_damp_withdraw (ri, rn, afi, safi, 1);  
-	}
+	    if (! CHECK_FLAG (ri->flags, BGP_INFO_HISTORY))
+	      bgp_damp_withdraw (ri, rn, afi, safi, 1);  
+	  }
+
+    zlog_info("after Update bgp route dampening information, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
+  
+
 	
       /* Update to new attribute.  */
-      bgp_attr_unintern (&ri->attr);
-      ri->attr = attr_new;
+    bgp_attr_unintern (&ri->attr);
+    ri->attr = attr_new;
 
       /* Update MPLS tag.  */
-      if (safi == SAFI_MPLS_VPN)
-        memcpy ((bgp_info_extra_get (ri))->tag, tag, 3);
+    if (safi == SAFI_MPLS_VPN)
+      memcpy ((bgp_info_extra_get (ri))->tag, tag, 3);
 
-      bgp_attr_flush (&new_attr);
+    bgp_attr_flush (&new_attr);
 
       /* Update bgp route dampening information.  */
-      if (CHECK_FLAG (bgp->af_flags[afi][safi], BGP_CONFIG_DAMPENING)
+    if (CHECK_FLAG (bgp->af_flags[afi][safi], BGP_CONFIG_DAMPENING)
 	  && peer->sort == BGP_PEER_EBGP)
-	{
+	  {
 	  /* Now we do normal update dampening.  */
-	  ret = bgp_damp_update (ri, rn, afi, safi);
-	  if (ret == BGP_DAMP_SUPPRESSED)
+	    ret = bgp_damp_update (ri, rn, afi, safi);
+	    if (ret == BGP_DAMP_SUPPRESSED)
 	    {
 	      bgp_unlock_node (rn);
-	      return 0;
+        zlog_info("after do normal update dampening, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
+        return 0;
 	    }
-	}
+	  }
 
       /* Nexthop reachability check. */
-      if ((afi == AFI_IP || afi == AFI_IP6) && safi == SAFI_UNICAST)
-	{
-	  if (peer->sort == BGP_PEER_EBGP && peer_ttl (peer) == 1 &&
+    if ((afi == AFI_IP || afi == AFI_IP6) && safi == SAFI_UNICAST)
+	  {
+	    if (peer->sort == BGP_PEER_EBGP && peer_ttl (peer) == 1 &&
 	      ! CHECK_FLAG (peer->flags, PEER_FLAG_DISABLE_CONNECTED_CHECK))
-	    connected = 1;
-	  else
-	    connected = 0;
+	      connected = 1;
+	    else
+	      connected = 0;
 
-	  if (bgp_ensure_nexthop (ri, NULL, connected))
-	    bgp_info_set_flag (rn, ri, BGP_INFO_VALID);
-	  else
+	    if (bgp_ensure_nexthop (ri, NULL, connected))
+	      bgp_info_set_flag (rn, ri, BGP_INFO_VALID);
+	    else
 	    {
 	      if (BGP_DEBUG(nht, NHT))
-		{
-		  char buf1[INET6_ADDRSTRLEN];
-		  inet_ntop(AF_INET, (const void *)&attr_new->nexthop, buf1, INET6_ADDRSTRLEN);
-		  zlog_debug("%s(%s): NH unresolved", __FUNCTION__, buf1);
-		}
+		    {
+		      char buf1[INET6_ADDRSTRLEN];
+		      inet_ntop(AF_INET, (const void *)&attr_new->nexthop, buf1, INET6_ADDRSTRLEN);
+		      zlog_debug("%s(%s): NH unresolved", __FUNCTION__, buf1);
+		    }
 	      bgp_info_unset_flag (rn, ri, BGP_INFO_VALID);
 	    }
-	}
-      else
-	bgp_info_set_flag (rn, ri, BGP_INFO_VALID);
+	  }
+    else
+	    bgp_info_set_flag (rn, ri, BGP_INFO_VALID);
 
-      bgp_attr_flush (&new_attr);
+    bgp_attr_flush (&new_attr);
 
       /* Process change. */
-      bgp_aggregate_increment (bgp, p, ri, afi, safi);
+    bgp_aggregate_increment (bgp, p, ri, afi, safi);
 
-      bgp_process (bgp, rn, afi, safi);
-      bgp_unlock_node (rn);
-
-      return 0;
-    }
-
+    bgp_process (bgp, rn, afi, safi);
+    bgp_unlock_node (rn);
+    
+    zlog_info("after Process change, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
+  
+      
+    return 0;
+  }
+  zlog_info("before received Logging, prefix %s info aspath is %s", inet_ntop (p->family, &p->u.prefix, buf, BUFSIZ), aspath_print(attr->aspath));
+  
+     
   /* Received Logging. */
   if (BGP_DEBUG (update, UPDATE_IN))  
-    {
-      zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d",
+  {
+    zlog (peer->log, LOG_DEBUG, "%s rcvd %s/%d",
 	    peer->host,
 	    inet_ntop(p->family, &p->u.prefix, buf, SU_ADDRSTRLEN),
 	    p->prefixlen);
-    }
+  }
 
   zlog_info("make bgp_info : one route for someone prefix");
   /* Make new BGP info. */
@@ -2403,26 +2416,26 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 
   /* Nexthop reachability check. */
   if ((afi == AFI_IP || afi == AFI_IP6) && safi == SAFI_UNICAST)
-    {
-      if (peer->sort == BGP_PEER_EBGP && peer_ttl (peer) == 1 &&
-	  ! CHECK_FLAG (peer->flags, PEER_FLAG_DISABLE_CONNECTED_CHECK))
-	connected = 1;
-      else
-	connected = 0;
+  {
+    if (peer->sort == BGP_PEER_EBGP && peer_ttl (peer) == 1 &&
+	    ! CHECK_FLAG (peer->flags, PEER_FLAG_DISABLE_CONNECTED_CHECK))
+	      connected = 1;
+    else
+	    connected = 0;
 
-      if (bgp_ensure_nexthop (new, NULL, connected))
-	bgp_info_set_flag (rn, new, BGP_INFO_VALID);
-      else
-	{
-	  if (BGP_DEBUG(nht, NHT))
+    if (bgp_ensure_nexthop (new, NULL, connected))
+	    bgp_info_set_flag (rn, new, BGP_INFO_VALID);
+    else
+	  {
+	    if (BGP_DEBUG(nht, NHT))
 	    {
 	      char buf1[INET6_ADDRSTRLEN];
 	      inet_ntop(AF_INET, (const void *)&attr_new->nexthop, buf1, INET6_ADDRSTRLEN);
 	      zlog_debug("%s(%s): NH unresolved", __FUNCTION__, buf1);
 	    }
-	  bgp_info_unset_flag (rn, new, BGP_INFO_VALID);
-	}
-    }
+	    bgp_info_unset_flag (rn, new, BGP_INFO_VALID);
+	  }
+  }
   else
     bgp_info_set_flag (rn, new, BGP_INFO_VALID);
 
@@ -3255,6 +3268,8 @@ int
 bgp_nlri_parse_ip (struct peer *peer, struct attr *attr,
                    struct bgp_nlri *packet)
 {
+
+  zlog_info("bgp_route.c file bgp_nlri_parse_ip func peer %s, aspath is %s", peer->host, aspath_print(attr->aspath));
   u_char *pnt;
   u_char *lim;
   struct prefix p;
