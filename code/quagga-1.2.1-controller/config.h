@@ -5,7 +5,7 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* bgpd vty socket */
-#define BGP_VTYSH_PATH "/var/run/bgpd.vty"
+#define BGP_VTYSH_PATH "/var/run/quagga/bgpd.vty"
 
 /* Mask for config files */
 #define CONFIGFILE_MASK 0600
@@ -14,7 +14,7 @@
 #define CONSUMED_TIME_CHECK 5000000
 
 /* daemon vty directory */
-#define DAEMON_VTY_DIR "/var/run"
+#define DAEMON_VTY_DIR "/var/run/quagga"
 
 /* Build for development */
 /* #undef DEV_BUILD */
@@ -627,7 +627,7 @@
 #define ISIS_METHOD_PFPACKET 1
 
 /* isisd vty socket */
-#define ISIS_VTYSH_PATH "/var/run/isisd.vty"
+#define ISIS_VTYSH_PATH "/var/run/quagga/isisd.vty"
 
 /* KAME IPv6 */
 /* #undef KAME */
@@ -649,16 +649,16 @@
 #define MULTIPATH_NUM 1
 
 /* nhrpd vty socket */
-#define NHRP_VTYSH_PATH "/var/run/nhrpd.vty"
+#define NHRP_VTYSH_PATH "/var/run/quagga/nhrpd.vty"
 
 /* OpenBSD */
 /* #undef OPEN_BSD */
 
 /* ospf6d vty socket */
-#define OSPF6_VTYSH_PATH "/var/run/ospf6d.vty"
+#define OSPF6_VTYSH_PATH "/var/run/quagga/ospf6d.vty"
 
 /* ospfd vty socket */
-#define OSPF_VTYSH_PATH "/var/run/ospfd.vty"
+#define OSPF_VTYSH_PATH "/var/run/quagga/ospfd.vty"
 
 /* Name of package */
 #define PACKAGE "quagga"
@@ -685,37 +685,37 @@
 /* #undef PAM_CONV_FUNC */
 
 /* bgpd PID */
-#define PATH_BGPD_PID "/var/run/bgpd.pid"
+#define PATH_BGPD_PID "/var/run/quagga/bgpd.pid"
 
 /* isisd PID */
-#define PATH_ISISD_PID "/var/run/isisd.pid"
+#define PATH_ISISD_PID "/var/run/quagga/isisd.pid"
 
 /* nhrpd PID */
-#define PATH_NHRPD_PID "/var/run/nhrpd.pid"
+#define PATH_NHRPD_PID "/var/run/quagga/nhrpd.pid"
 
 /* ospf6d PID */
-#define PATH_OSPF6D_PID "/var/run/ospf6d.pid"
+#define PATH_OSPF6D_PID "/var/run/quagga/ospf6d.pid"
 
 /* ospfd PID */
-#define PATH_OSPFD_PID "/var/run/ospfd.pid"
+#define PATH_OSPFD_PID "/var/run/quagga/ospfd.pid"
 
 /* pimd PID */
-#define PATH_PIMD_PID "/var/run/pimd.pid"
+#define PATH_PIMD_PID "/var/run/quagga/pimd.pid"
 
 /* ripd PID */
-#define PATH_RIPD_PID "/var/run/ripd.pid"
+#define PATH_RIPD_PID "/var/run/quagga/ripd.pid"
 
 /* ripngd PID */
-#define PATH_RIPNGD_PID "/var/run/ripngd.pid"
+#define PATH_RIPNGD_PID "/var/run/quagga/ripngd.pid"
 
 /* watchquagga PID */
-#define PATH_WATCHQUAGGA_PID "/var/run/watchquagga.pid"
+#define PATH_WATCHQUAGGA_PID "/var/run/quagga/watchquagga.pid"
 
 /* zebra PID */
-#define PATH_ZEBRA_PID "/var/run/zebra.pid"
+#define PATH_ZEBRA_PID "/var/run/quagga/zebra.pid"
 
 /* pimd vty socket */
-#define PIM_VTYSH_PATH "/var/run/pimd.vty"
+#define PIM_VTYSH_PATH "/var/run/quagga/pimd.vty"
 
 /* Quagga Group */
 #define QUAGGA_GROUP "root"
@@ -727,10 +727,10 @@
 #define QUAGGA_USER "root"
 
 /* ripng vty socket */
-#define RIPNG_VTYSH_PATH "/var/run/ripngd.vty"
+#define RIPNG_VTYSH_PATH "/var/run/quagga/ripngd.vty"
 
 /* rip vty socket */
-#define RIP_VTYSH_PATH "/var/run/ripd.vty"
+#define RIP_VTYSH_PATH "/var/run/quagga/ripd.vty"
 
 /* Define to the type of arg 1 for `select'. */
 #define SELECT_TYPE_ARG1 int
@@ -821,10 +821,10 @@
 #endif
 
 /* zebra api socket */
-#define ZEBRA_SERV_PATH "/var/run/zserv.api"
+#define ZEBRA_SERV_PATH "/var/run/quagga/zserv.api"
 
 /* zebra vty socket */
-#define ZEBRA_VTYSH_PATH "/var/run/zebra.vty"
+#define ZEBRA_VTYSH_PATH "/var/run/quagga/zebra.vty"
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE

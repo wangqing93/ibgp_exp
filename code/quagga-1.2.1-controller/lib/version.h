@@ -45,7 +45,7 @@
 
 #define QUAGGA_COPYRIGHT "Copyright 1996-2005 Kunihiro Ishiguro, et al."
 
-#define QUAGGA_CONFIG_ARGS "--enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --no-create --no-recursion"
+#define QUAGGA_CONFIG_ARGS "--enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root -sysconfdir=/etc/quagga -localstatedir=/var/run/quagga"
 
 pid_t pid_output (const char *);
 
