@@ -141,8 +141,8 @@ CARES_LIBS = -L/usr/local/lib -lcares
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -g -Os -fstack-protector-strong --param=ssp-buffer-size=4 -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -fpie -fno-omit-frame-pointer -Wall -Wextra -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wbad-function-cast -Wwrite-strings -Wno-unused-result -Wno-unused-parameter -Wno-missing-field-initializers
-CONFDATE = 20180412
-CONFIG_ARGS = --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --no-create --no-recursion
+CONFDATE = 20180413
+CONFIG_ARGS = --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --prefix=/usr --sysconfdir=/etc/quagga --localstatedir=/var/run/quagga --no-create --no-recursion
 CPP = gcc -E
 CPPFLAGS = 
 CURSES = 
@@ -268,7 +268,7 @@ dvidir = ${docdir}
 enable_group = root
 enable_user = root
 enable_vty_group = root
-exampledir = ${prefix}/etc
+exampledir = /etc/quagga
 exec_prefix = ${prefix}
 host = x86_64-unknown-linux-gnu
 host_alias = 
@@ -282,22 +282,22 @@ install_sh = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
-localstatedir = ${prefix}/var
+localstatedir = /var/run/quagga
 mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
 pkgsrcdir = 
 pkgsrcrcdir = 
-prefix = /usr/local
+prefix = /usr
 program_transform_name = s,x,x,
 psdir = ${docdir}
-quagga_statedir = /var/run
+quagga_statedir = /var/run/quagga
 runstatedir = ${localstatedir}/run
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 srcdir = .
-sysconfdir = ${prefix}/etc
+sysconfdir = /etc/quagga
 target = x86_64-unknown-linux-gnu
 target_alias = 
 target_cpu = x86_64
@@ -311,7 +311,7 @@ top_srcdir = ..
 # derived variables.
 pkg_names = daemons dev doc libs smf
 pkg_quagga_daemons = zebra bgpd ospfd ospf6d ripd ripngd
-pkg_name_rev = 1.2.1-20180412-linux-gnu-x86_64
+pkg_name_rev = 1.2.1-20180413-linux-gnu-x86_64
 pkg_depends = $(pkg_names:%=depend.%)
 pkg_packages = $(pkg_names:%=quagga-%-$(pkg_name_rev).pkg)
 pkg_pkginfos = $(pkg_names:%=pkginfo.%.full)
@@ -343,14 +343,14 @@ edit = $(SED) \
  	-e 's,[@]PACKAGE_TARNAME[@],quagga,g' \
  	-e 's,[@]PACKAGE_VERSION[@],1.2.1,g' \
  	-e 's,[@]PACKAGE_BUGREPORT[@],https://bugzilla.quagga.net,g' \
-  	-e 's,[@]CONFDATE[@],20180412,g' \
+  	-e 's,[@]CONFDATE[@],20180413,g' \
  	-e 's,[@]target_cpu[@],$(target_cpu),g' \
  	-e 's,[@]target_host[@],$(target_host),g' \
  	-e 's,[@]target_os[@],$(target_os),g'
 
 
 # common options for pkgmk
-pkg_make_vars = exec_prefix=${prefix} prefix=/usr/local \
+pkg_make_vars = exec_prefix=${prefix} prefix=/usr \
 	builddir=. srcdir=. \
 	top_builddir=.. top_srcdir=.. \
 	abs_builddir=/home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris abs_srcdir=/home/wq/Documents/ibgp_exp/code/quagga-1.2.1/solaris \

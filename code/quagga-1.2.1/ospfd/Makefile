@@ -235,8 +235,8 @@ CARES_LIBS = -L/usr/local/lib -lcares
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -g -Os -fstack-protector-strong --param=ssp-buffer-size=4 -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -fpie -fno-omit-frame-pointer -Wall -Wextra -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wbad-function-cast -Wwrite-strings -Wno-unused-result -Wno-unused-parameter -Wno-missing-field-initializers
-CONFDATE = 20180412
-CONFIG_ARGS = --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --no-create --no-recursion
+CONFDATE = 20180413
+CONFIG_ARGS = --enable-vtysh --enable-user=root --enable-group=root --enable-vty-group=root --prefix=/usr --sysconfdir=/etc/quagga --localstatedir=/var/run/quagga --no-create --no-recursion
 CPP = gcc -E
 CPPFLAGS = 
 CURSES = 
@@ -362,7 +362,7 @@ dvidir = ${docdir}
 enable_group = root
 enable_user = root
 enable_vty_group = root
-exampledir = ${prefix}/etc
+exampledir = /etc/quagga
 exec_prefix = ${prefix}
 host = x86_64-unknown-linux-gnu
 host_alias = 
@@ -376,22 +376,22 @@ install_sh = ${SHELL} /home/wq/Documents/ibgp_exp/code/quagga-1.2.1/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
-localstatedir = ${prefix}/var
+localstatedir = /var/run/quagga
 mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
 pkgsrcdir = 
 pkgsrcrcdir = 
-prefix = /usr/local
+prefix = /usr
 program_transform_name = s,x,x,
 psdir = ${docdir}
-quagga_statedir = /var/run
+quagga_statedir = /var/run/quagga
 runstatedir = ${localstatedir}/run
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 srcdir = .
-sysconfdir = ${prefix}/etc
+sysconfdir = /etc/quagga
 target = x86_64-unknown-linux-gnu
 target_alias = 
 target_cpu = x86_64

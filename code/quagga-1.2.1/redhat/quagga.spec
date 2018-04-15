@@ -115,7 +115,7 @@
 Summary: Routing daemon
 Name:			quagga
 Version:		%{rpmversion}
-Release:		20180412%{release_rev}%{?dist}
+Release:		20180413%{release_rev}%{?dist}
 License:		GPLv2+
 Group:			System Environment/Daemons
 Source0:		https://download.savannah.gnu.org/releases/quagga/%{name}-%{quaggaversion}.tar.gz
