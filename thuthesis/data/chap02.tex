@@ -71,7 +71,7 @@ BGP路由计算\cite{DianeTeare2016CCNP}的过程是为了选择最优路由，B
 
 iBGP\cite{Oprescu2011Rethinking}目前存在三方面问题：可扩展性差，域内路由决策非最优出口，复杂路由策略难以管理。
 
-iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同时确保BGP路由路径上的所有路由器将数据报正确地转发到目的地。全连接导致每台边界路由器需要和域内的其他边界路由器维护iBGP会话，整个域内的iBGP会话数量是边界路由器总数的平方数量级，同时随着BGP路由表加速增长对路由器的存储和计算能力提出了更高的要求，路由表的数量从2001年的约10万条已经增长到2018年的约70万条\cite{bgptabedata}，iBGP的可扩展性问题日益显著。
+iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同时确保BGP路由路径上的所有路由器将数据报正确地转发到目的地。全连接导致每台边界路由器需要和域内的其他边界路由器维护iBGP会话，整个域内的iBGP会话数量是边界路由器总数的平方数量级，同时随着BGP路由表加速增长对路由器的存储和计算能力提出了更高的要求，路由表的数量从2001年的约10万条已经增长到2018年的约70万条，iBGP的可扩展性问题日益显著。
 
 自治系统内的边界路由器收到路由后，会通过iBGP连接将该路由对应前缀的最优路由，传输给相连的iBGP对等体。如果自治系统内部的iBGP连接是路由反射结构，路由反射器收到路由之后，会计算最优路由，将最优路由宣告给与该反射器在同一个集群的客户端。这直接导致了某些边界路由器没有收到全部路由。在路由计算的过程中，如果没有基于全部路由计算，或者仅考虑了IGP cost，没有考虑域内的拓扑等其他信息，这些均有可能导致自治系统内的每台边界路由器上的路由计算结果非最优出口。
 
@@ -95,7 +95,10 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 \end{figure}
 
 \subsubsection{路由反射\cite{rfc2796}}
+
+
 2000年，针对iBGP的可扩展问题，T.Bates等人在RFC2796\cite{rfc2796}中提出了路由反射。路由反射是将自治系统内的边界路由器分成多个集群，每个集群里面有一个或者多个路由反射器，集群中其他的路由器称之为客户机（Client）。客户机仅与自己的路由反射器RR建立iBGP连接，路由反射器之间建立Full-Mesh的iBGP连接。当RR收到一条路由更新：如果该路由从非client的iBGP对等体收到，RR将最优路由反射给所有的clients；如果该路由从client的iBGP对等体收到，RR将最优路由反射给其他的RR和所在cluster里面的clients。
+
 
 路由反射因为缺少全部路由和结构设计等问题，在特定条件下会产生非最优出口、转发环路、路由震荡等问题。
 
@@ -109,6 +112,8 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
   \label{fig:rr-forwardloop}
 \end{figure}
 
+
+
 路由反射导致的转发环路根本原因是，路由反射结构设计不合理，物理链路和逻辑链路不一致，路由反射器最优出口的ospf路径经过了其他的路由反射器，该数据包被重新路由，如图\ref{fig:rr-forwardloop}，形成转发环路的过程：
 
 \begin{itemize}
@@ -121,7 +126,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 
 
-路由反射导致的路由震荡有两种典型的情况：MED震荡和拓扑震荡。
+路由反射导致的路由震荡有两种典型的情况：MED震荡（因为MED不可比产生的路由震荡）和拓扑震荡（因为RR拓扑设计不合理产生的路由震荡）。
 
 \begin{figure}
   \centering
@@ -132,20 +137,62 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 \end{figure}
 
 
-路由反射导致的MED震荡（图4），根本原因在于路由计算的过程中某些度量值（MED）不可比，如图\ref{fig:rr-med},因为不同时刻路由反射器针对同一Prefix产生的最优路由不同，导致其他路由反射器在不同时候收到的同一Prefix的路由集不同以至于该Prefix的最优路由不同，形成的MED震荡过程如下：
+路由反射因为MED震荡（图4），根本原因在于路由计算的过程中某些度量值（MED）不可比，如图\ref{fig:rr-med},因为不同时刻路由反射器针对同一Prefix产生的最优路由不同，导致其他路由反射器在不同时候收到的同一Prefix的路由集不同以至于该Prefix的最优路由不同，形成的MED震荡过程如下：
 
-注：传输到域内的3条路由，前缀、Weight、Local Preference、aspath均相同
+注：传输到域内的3条路由，前缀、Weight、Local Preference、aspath均相同。
 
 \begin{itemize}
-\item 步骤1：RR-A从Client-A1和Client-A2收到来自前缀Prefix1的路由，先收到Client-A1，再收到Client-A2， 因为Client-A2到RR-A的IGPcost更小，所以RR-A收到2条Prefix1的路由，选择来自Client-A2的路由为Prefix1的最优路由；
+\item 步骤1：RR-A从Client-A1和Client-A2收到前缀Prefix1的路由，先收到Client-A1，再收到Client-A2， 因为Client-A2到RR-A的IGPcost更小，所以RR-A收到2条Prefix1的路由，选择来自Client-A2的路由为Prefix1的最优路由；
 \item 步骤2：RR-A将Prefix1的最优路由宣告给RR-B，RR-B收到来自Client-A2和Client-B的路由，因为Client-A2和Client-B收到的路由来自于同一个自治系统，所以MED值可以比较，最终RR-B选择来自MED值更小的Client-B过来的路由；
 \item 步骤3：RR-B将Prefix1的最优路由宣告给RR-A，RR-A收到来自Client-B、Client-A2、Client-A1的总共3条路由，因为路由计算是把由近及远的路由两两比较，那么RR-A进行路由计算的时候先因为MED值可比淘汰掉来自Client-A2的路由，然后将Client-B和client-A2进行比较，因为MED值不可比取IGPcost更小的路由，则RR-A选择来自Client-A1的路由为Prefix1的最优路由；
 \item 步骤4：RR-A将Prefix1的最优路由宣告给RR-B，则RR-B收到来自Client-A1和Client-B的路由，因为MED不可比取IGPcost更小的路由，则RR-B选择来自Client-A1的路由为Prefix1的最优路由;
-\item 步骤5：RR-B将Prefix1的最优路由，宣告给RR-A，则RR-A处只有来自Client-A1和Client-A2的两条路由了，回到步骤1，发生路由震荡。
+\item 步骤5：RR-B将Prefix1的最优路由，宣告给RR-A，则RR-A处只有来自Client-A1和Client-A2的两条路由了，回到步骤1，发生路由震荡...
 \end{itemize}
 
 
-路由反射导致的拓扑震荡，根本原因是RR结构设计不合理，cluster内部的RR和client的IGP cost远大于RR和其他cluster内的client，路由决策主要依赖IGP信息。（图5），相同颜色的路由器为同一个cluster，RR1收到来自C1的路由，选择来自C1的路由；RR2收到RR1宣告出来的来自C1的路由和来自C2的路由，根据IGP cost等度量，选择来自C2的路由；RR3收到RR1宣告出来的来自C1的路由、RR2宣告出来的来自C2的路由、来自C3的路由，选择RR1向外宣告的来自C1的路由；RR1收到来自C1和C2，选择C2（震荡）。该种情况产生的
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=\textwidth]{rr-topo}
+  \caption{路由反射引起的拓扑震荡举例\cite{ibgp2016infocom}}
+  \label{fig:rr-topo}
+\end{figure}
+
+
+
+路由反射导致的拓扑震荡，根本原因是RR结构设计不合理，cluster内部的RR和client之间的IGPcost远大于RR和其他cluster内的client的IGPcost，路由决策主要依赖IGP信息，如图\ref{fig:rr-topo}，产生路由震荡的过程如下：
+
+注：传输到域内的3条路由，前缀、Weight、Local Preference、aspath、MED均相同。
+
+\begin{itemize}
+\item 步骤1：RR-A收到来自Client-A的前缀为Prefix1的路由，RR-A只有1条路由，则选择来自Client-A的路由为Prefix1的最优路由，RR-A将Prefix1的来自Client-A的最优路由宣告给RR-B和RR-C；
+\item 步骤2：RR-B有来自client-A、Client-B的2条路由，根据IGPcost选择来自Client-B的路由作为Prefix1的最优路由，RR-B会将Prefix1的来自Client-B的最优路由宣告给RR-A和RR-C;
+\item 步骤3：RR-C有来自Client-A、Client-B、Client-C的3条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-C会将Prefix1的来自Cleint-A的最优路由宣告给RR-A和RR-B；
+
+
+\item 步骤4：RR-A有来自Client-A、Client-B的2条路由，根据IGPcost选择来自Client-B放入路由作为Prefix1的最优路由，RR-A将Prefix1的来自Client-B的最优路由宣告给RR-B和RR-C;
+\item 步骤5：RR-B有来自Client-A、Client-B的2条路由，根据IGPcost选择来自Client-B的路由作为Prefix1的最优路由，RR-B会将Prefix1的来自Cleint-B的最优路由宣告给RR-A和RR-C；
+\item 步骤6：RR-C有来自Client-B、Client-C的2条路由，根据IGPcost选择来自Client-C的路由作为Prefix1的最优路由，RR-C会将Prefix1的来自Client-C的最优路由宣告给RR-A和RR-B；
+
+
+\item 步骤7：RR-A有来自Client-A、Client-B、Client-C的3条路由，根据IGPcost选择来自Client-B的路由作为Prefix1的最优路由，RR-A将Prefix1的来自Client-B的最优路由宣告给RR-B和RR-C;
+\item 步骤8：RR-B有来自Client-B、Client-C的2条路由，根据IGPcost选择来自Client-C的路由作为Prefix1的最优路由，RR-B会将Prefix1的来自Cleint-C的最优路由宣告给RR-A和RR-C；
+\item 步骤9：RR-C有来自Client-B、Client-C的2条路由，根据IGPcost选择来自Cleint-C的路由作为Prefix的最优路由，RR-C将Prefix1的来自Client-C的最优路由宣告给RR-A和RR-B；
+
+
+\item 步骤10：RR-A有来自Client-A、Client-C的2条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-A会将Prefix1的来自Cleint-A的最优路由宣告给RR-B和RR-C；
+\item 步骤11：RR-B有来自client-A、Client-B、Client-C的3条路由，根据IGPcost选择来自Client-C的路由作为Prefix1的最优路由，RR-B会将Prefix1的来自Cleint-C的最优路由宣告给RR-A和RR-C；
+\item 步骤12：RR-C有来自client-A、Client-C的2条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-C会将Prefix1的来自Cleint-A的最优路由宣告给RR-A和RR-B；
+
+
+\item 步骤13：RR-A有来自Client-A、Client-C的2条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-A会将Prefix1的来自Cleint-A的最优路由宣告给RR-B和RR-C；（步骤1）
+\item 步骤14：RR-B有来自client-A、Client-B的2条路由，根据IGPcost选择来自Client-B的路由作为Prefix1的最优路由，RR-B会将Prefix1的来自Cleint-B的最优路由宣告给RR-A和RR-C;（步骤2）
+\item 步骤13：RR-C有来自Client-A、Client-B、Client-C的3条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-C会将Prefix1的来自Cleint-A的最优路由宣告给RR-A和RR-B。（步骤3，开始循环发生路由震荡...）
+
+\end{itemize}
+
+
+
 \subsubsection{AS联邦}
 AS联邦（图6）的基本思想是将自治系统划分成多个子自治系统，子自治系统之间运行扩展的eBGP协议，子自治系统内部全连接，运行iBGP协议。
 
