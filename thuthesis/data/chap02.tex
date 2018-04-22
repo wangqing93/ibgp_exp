@@ -25,7 +25,7 @@ BGP协议运行在自治系统内的每台边界路由器上，每台边界路�
     \item Adj-RIBs-In：该表中存储了从不同对等体收到的未经路由入口过滤和属性修改的原始BGP路由信息，该信息用于BGP决策过程的输入。
     \item Local RIB：该表中存储了经过路由入口策略（过滤和BGP属性修改）的路由信息，此外该表中还使用selected标记了每一个前缀的最优路由。
     \item Adj-RIBs-Out:该表中存储了经过路由出口策略，即将被宣告给每一个对等体的最优路由信息。
-  \end{itemize}
+\end{itemize}
 
 \subsection{路由策略}
 路由信息在自治系统间传输，每个自治系统如何影响路由选择和传递，需要依赖该自治系统部署的路由策略\cite{DianeTeare2016CCNP}，可以过滤更新从邻居收到的路由信息，经过路由计算之后也可以过滤更新将宣告给邻居的路由信息。
@@ -79,13 +79,6 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 随着网络规模和需求不断增长，路由表的规模和域间的BGP消息也越来越多，iBGP结构的可扩展性已经成为iBGP存在的最重要最有挑战性 的问题之一。
 
-
-\section{现有解决iBGP可扩展问题的相关研究}
-现有解决iBGP可扩展问题的相关研究，根据体系结构思想和设计，大致可以分成两类：分布式体系结构下的相关研究（路由反射\cite{rfc2796}、AS联邦\cite{rfc1965}）和集中式体系结构下的相关研究（SoftRouter\cite{lakshman2004}、RCP\cite{Feamster2004The}、RFCP\cite{Rothenberg}）。
-
-\subsection{分布式体系结构下的相关研究}
-传统的分布式体系结构：路由反射和AS联邦，解决了iBGP全连接引起的可扩展问题，但其设计本身可能导致选择路由不是最优出口、路由震荡、转发环路等问题。
-
 \begin{figure}
   \centering
   % Requires \usepackage{graphicx}
@@ -94,13 +87,20 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
   \label{fig:rr-nobest}
 \end{figure}
 
-\subsubsection{路由反射\cite{rfc2796}}
+\section{现有解决iBGP可扩展问题的相关研究}
+现有解决iBGP可扩展问题的相关研究，根据体系结构思想和设计，大致可以分成两类：分布式路由体系结构下的相关研究（路由反射\cite{rfc2796}、AS联邦\cite{rfc1965}）和集中式路由体系结构下的相关研究（SoftRouter\cite{lakshman2004}、RCP\cite{Feamster2004The}、RFCP\cite{Rothenberg}）。分布式路由体系结构中所有的网络功能等均由路由器实现，传统网络使用的是分布式路由体系结构，数据平面和控制平面的功能都集中在同一个平台（路由器）上实现，数据平面和控制平面的任何变动均会影响网络路由协议。集中式路由体系结构\cite{centralization}将数据平面和控制平面进行分离，在集中平台上实现网络的控制功能，减少了路由器的功能需求。
 
+\subsection{分布式路由体系结构下的相关研究}
+传统的分布式体系结构：路由反射和AS联邦，解决了iBGP全连接引起的可扩展问题，但其设计本身可能导致选择路由不是最优出口、路由震荡、转发环路等问题。
+
+\subsubsection{路由反射\cite{rfc2796}}
 
 2000年，针对iBGP的可扩展问题，T.Bates等人在RFC2796\cite{rfc2796}中提出了路由反射。路由反射是将自治系统内的边界路由器分成多个集群，每个集群里面有一个或者多个路由反射器，集群中其他的路由器称之为客户机（Client）。客户机仅与自己的路由反射器RR建立iBGP连接，路由反射器之间建立Full-Mesh的iBGP连接。当RR收到一条路由更新：如果该路由从非client的iBGP对等体收到，RR将最优路由反射给所有的clients；如果该路由从client的iBGP对等体收到，RR将最优路由反射给其他的RR和所在cluster里面的clients。
 
 
+
 路由反射因为缺少全部路由和结构设计等问题，在特定条件下会产生非最优出口、转发环路、路由震荡等问题。
+
 
 路由反射导致的非最优出口问题根本原因是，路由反射器计算出来的最优路由并不是Client的最优路由，如图\ref{fig:rr-nobest}，假设RR收到前缀Prefix1的路由信息，RR经过路由计算后发现Client-A为Prefix1的最优出口，RR会将Prefix1的最优出口为Client-A这条消息宣告给Client-B和Client-C，Client-C会认为Prefix1的最优出口为Client-A，实际上对于Client-C而言，Client-B为Prefix1的最优出口。
 
@@ -128,6 +128,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 路由反射导致的路由震荡有两种典型的情况：MED震荡（因为MED不可比产生的路由震荡）和拓扑震荡（因为RR拓扑设计不合理产生的路由震荡）。
 
+
 \begin{figure}
   \centering
   % Requires \usepackage{graphicx}
@@ -137,7 +138,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 \end{figure}
 
 
-路由反射因为MED震荡（图4），根本原因在于路由计算的过程中某些度量值（MED）不可比，如图\ref{fig:rr-med},因为不同时刻路由反射器针对同一Prefix产生的最优路由不同，导致其他路由反射器在不同时候收到的同一Prefix的路由集不同以至于该Prefix的最优路由不同，形成的MED震荡过程如下：
+路由反射因为MED震荡，根本原因在于路由计算的过程中某些度量值（MED）不可比，如图\ref{fig:rr-med},因为不同时刻路由反射器针对同一Prefix产生的最优路由不同，导致其他路由反射器在不同时候收到的同一Prefix的路由集不同以至于该Prefix的最优路由不同，形成的MED震荡过程如下：
 
 注：传输到域内的3条路由，前缀、Weight、Local Preference、aspath均相同。
 
@@ -187,31 +188,102 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 \item 步骤13：RR-A有来自Client-A、Client-C的2条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-A会将Prefix1的来自Cleint-A的最优路由宣告给RR-B和RR-C；（步骤1）
 \item 步骤14：RR-B有来自client-A、Client-B的2条路由，根据IGPcost选择来自Client-B的路由作为Prefix1的最优路由，RR-B会将Prefix1的来自Cleint-B的最优路由宣告给RR-A和RR-C;（步骤2）
-\item 步骤13：RR-C有来自Client-A、Client-B、Client-C的3条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-C会将Prefix1的来自Cleint-A的最优路由宣告给RR-A和RR-B。（步骤3，开始循环发生路由震荡...）
+\item 步骤15：RR-C有来自Client-A、Client-B、Client-C的3条路由，根据IGPcost选择来自Client-A的路由作为Prefix1的最优路由，RR-C会将Prefix1的来自Cleint-A的最优路由宣告给RR-A和RR-B。（步骤3，开始循环发生路由震荡...）
 
 \end{itemize}
 
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=\textwidth]{ascon-nobest}
+  \caption{AS联邦引起的非最优出口举例}
+  \label{fig:ascon-nobest}
+\end{figure}
 
 
 \subsubsection{AS联邦}
-AS联邦（图6）的基本思想是将自治系统划分成多个子自治系统，子自治系统之间运行扩展的eBGP协议，子自治系统内部全连接，运行iBGP协议。
 
-AS联邦因为缺少全部路由和MED度量值不可比等问题，在特定条件下会产生非最优出口、路由震荡等问题。
-AS联邦导致的非最优出口（图7），Ra收到来自Rb和Rc的路由Pre，Ra根据IGP cost选择来自Rc的路由Pre，Rd收到Ra宣告的来自Rc的路由，Rd认为Pre的最优出口为Rc，实际上Rd的最优出口是Rb。
 
-AS联邦导致的MED路由震荡（图8），Ra选Rb(MED去除Rc, IGP去除Re), Rd选Rb(IGP), Ra选Rc(IGP), Rd选Re(MED), Ra选Rb(路由发生Loop)。
+1996年，针对iBGP的可扩展问题，P.Traina等人在RFC1965\cite{rfc1965}中提出了AS联邦的方案。AS联邦的基本思想是将自治系统划分成多个子自治系统，子自治系统之间运行扩展的eBGP协议，子自治系统内部全连接，运行iBGP协议。
 
-\subsection{集中式体系结构下的相关研究}
-新型的集中式体系结构：SoftRouter、RCP、RFCP，解决了iBGP的可扩展问题，对路由存储、路由计算、策略优化某个方面进行了优化。
-\subsubsection{SoftRouter}
-SoftRouter（图9）的基本思想是将主控板（控制平面）从传统路由器中分离，配有主控板的路由器作为控制单元，配有线卡的路由器作为转发单元，转发单元和控制单元多对多动态绑定，转发单元通过ForCES协议获得控制单元的转发表。
+为了避免自治系统内出现路由信息环路，给自治系统内部的每一个子自治系统分配了Member-AS Number。当路由在域内传输的时候，通过检查经过子自治系统的Member-A Number序列，即可有效地防止域内路由信息传输的过程中发生环路。
 
-SoftRouter解决了iBGP可扩展问题。FE可以动态绑定到多个CE上，不同CE执行路由器不同的功能，则SoftRouter容易开发新功能。此外，主控板减少，运营商的开支也相对应地减少。Softrouter也存在一定的局限性，因为CE和FE多对多，所以Softrouter结构复杂，本身可扩展性较差；在路由计算的过程中，仍使用传统的主控板进行计算，没有考虑IGP视图；FE不同的功能策略在不同的CE上进行配置，不同CE策略可能存在矛盾、覆盖等情况。
 
-\subsubsection{RCP}
-RCP（Route Control Platform，图10）是在自治系统内部建立一个集中控制平台，通过与AS内边界路由器建立iBGP连接来接收路由。在RCP平台上进行集中式路由计算和策略管理，如果邻居AS也部署了RCP平台，那么RCP平台之间可以直接建立BGP连接进行通信，这种方式有助于域间新协议的发展。
 
-RCP可以集中式路由存储；集中式策略配置，方便网络操作员配置；有集中计算资源、IGP拓扑和全部路由进行路由计算。但是因为RCP平台本身支持iBGP、eBGP连接，平台可扩展性较差；在策略集中配置的过程中未考虑对集中的策略配置进行检测，预防策略冲突、覆盖等问题。RCP的路由计算仍属于传统的分布式路由计算，计算N次得到N台路由器的最优出口路由。
+
+
+
+AS联邦因为部分边界路由器在进行最优路由计算的时候，存在缺少全部路由和MED度量值不可比等问题，在特定条件下会产生最优路由计算结果非最优出口、路由震荡等问题。
+
+
+
+AS联邦导致的非最优出口\cite{rfc5065}，根本原因在于自治系统内部的子自治系统之间传输的是最优路由，那么子自治系统可能得不到全部的路由，该种情况下路由计算的结果则不一定是最优出口，如图\ref{fig:ascon-nobest}，具体流程见下：
+
+注：传输到域内的3条路由，前缀、Weight、Local Preference均相同。
+
+\begin{itemize}
+\item 步骤1：Ra-1收到来自Ra-2和Ra-3的路由Prefix1(前缀为192.168.1.0/24的路由信息),，Ra根据IGPcost最小原则选择来自Ra-3的路由作为Prefix1的最优路由,并宣告给Rb-1;
+\item 步骤2：Rb-1收到Ra-1宣告的来自Ra-3的路由，Rb-1边界路由器有来自Ra-3和Rb-2的2条路由，根据IGPcost值最小Rb-1认为Prefix1的最优路由为来自Ra-3的路由。（实际对于Prefix1，Rb-1的最优出口是Ra-2，而不是Ra-3）
+\end{itemize}
+
+
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=\textwidth]{ascon-med}
+  \caption{AS联邦引起的MED震荡举例}
+  \label{fig:ascon-med}
+\end{figure}
+
+AS联邦导致的MED路由震荡\cite{rfc3345}，根本原因在于路由计算的过程中没有基于全部的路由信息以及某些度量值（MED）不可比，如图\ref{fig:ascon-med},因为不同时刻子自治系统针对同一Prefix向外宣告的最优路由不同，导致其他子自治系统在不同时候收到的同一Prefix的路由集不同以至于计算出来的该Prefix的最优路由不同，形成的MED震荡过程如下：
+
+
+\begin{itemize}
+  \item 步骤1：Ra-1收到来自Ra-2和Ra-3的路由前缀为Prefix1(192.168.1.0/24的路由信息),，Ra根据IGPcost最小原则选择来自Ra-3的路由作为Prefix1的最优路由,并宣告给Rb-1;
+  \item 步骤2：Rb-1收到Ra-1宣告的来自Ra-3的路由，Rb-1边界路由器有来自Ra-3和Rb-2的2条路由，根据MED值最小Rb-1认为Prefix1的最优路由为来自Rb-2的路由,并宣告给Ra-1;
+  \item 步骤3:Ra-1有来自Rb-2、Ra-3、Ra-2的3条路由，由收到时间由近及远进行两两比较。先比较Rb-2和Ra-3，根据MED最小选择Rb-2。再将Rb-2和Ra-2一起比较，根据IGPcost最小选择来自Ra-2的路由作为Prefix1的最优路由，并宣告给Rb-1；
+  \item 步骤4：Rb-1收到Ra-1宣告的来自Ra-2的路由，Rb-1边界路由器有来自Ra-2和Rb-2的2条路由，根据IGPcost值最小Rb-1认为Prefix1的最优路由为来自Ra-2的路由,并宣告给Ra-1;
+  \item 回到步骤1，发生路由震荡。
+\end{itemize}
+
+\subsection{集中式路由体系结构下的相关研究}
+
+集中式路由体系结构主要的思路是数据平面和控制平面分离。为了解决iBGP的可扩展问题，很多学者从集中式路由体系结构的思路切入，针对日益复杂的网络拓扑和管理控制功能，提出了一些具有代表性的工作，比如SoftRouter、RCP（Route Control Platform）、RFCP（Route Flow Control Platform），解决了iBGP的可扩展问题，同时也对路由存储、路由计算、策略部署等某个方面进行了优化。
+
+\subsubsection{SoftRouter\cite{lakshman2004}}
+SoftRouter的基本思想是将主控板（控制平面）从传统路由器中分离，配有主控板的路由器作为控制单元，配有线卡的路由器作为转发单元。转发单元和控制单元通过多对多的动态绑定进行连接，转发单元通过DDCP协议将自己绑定到最优的控制单元。控制单元之间通过iBGP协议进行Full-Mesh连接，转发单元和控制单元之间的信息交互通过ForCES\cite{rfc3746}协议，比如转发单元通过ForCES协议获得控制单元的转发表。
+
+SoftRouter结构中，转发单元之间不需要建立Full-Mesh的全连接，这解决了iBGP可扩展问题。因为转发单元和控制单元已经完全分离，在控制单元上可以运行一些更复杂的安全协议。转发单元可以动态绑定到多个控制单元上，不同控制单元执行路由器不同的功能，所以SoftRouter也容易部署开发新的功能。此外，自治系统内的主控板的总数减少，运营商的开支也相对应地减少。
+
+Softrouter也存在一定的局限性，列举其中主要的三点局限性：
+\begin{itemize}
+  \item 转发单元和控制单元多对多的连接结构，使得Softrouter整体的结构十分复杂，其本身的可扩展性非常差；
+  \item 在路由计算的过程中，仍使用传统的主控板进行计算，并没有考虑IGP视图，导致路由计算的结构不够灵活；
+  \item 转发单元上不同的功能策略在不同的控制单元上进行配置，不同控制单元部署下发的策略可能存在矛盾、覆盖等情况。
+\end{itemize}
+
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=\textwidth]{rcp}
+  \caption{Routing Control Platform in the Internet\cite{Feamster2004The}}
+  \label{fig:rcp}
+\end{figure}
+
+\subsubsection{RCP\cite{Feamster2004The}}
+RCP（Route Control Platform，路由控制平台）的基本思想是在自治系统内部建立一个集中控制平台，通过与自治系统内的边界路由器建立iBGP连接来接收从eBGP连接传输过来的路由，在集中控制平台上进行集中式路由存储、策略应用和路由计算，最终得到自治系统内每台边界路由器的最优路由，通过iBGP下发到每台边界路由器，由边界路由器进行eBGP宣告。如果eBGP邻居的自治系统也部署了RCP平台，那么RCP平台之间可以直接建立Inter-AS协议连接进行通信，大概框架如图\ref{fig:rcp}。
+
+基于RCP的思想，有学者提出了RCP的具体实现方案\cite{Caldwell2005Design}，即在集中控制平台上运行三个模块，分别为BGP Engine，IGP Viewer和Route Control Server，BGP Engine负责和自治系统内的边界路由器通信，IGP Viewer负责即时收集域内拓扑信息，将对应的IGPcost矩阵传给Control Server，Control Server负责路由表的集中存储、路由策略的管理以及最优路由的计算等控制平面的功能。
+
+RCP集中式控制平台可以进行集中式的路由存储，路由器上不需要存储路由表，极大地减少了路由器的负载。RCP集中式控制平台能够更好地进行策略管理，网络操作员在集中平台上部署路由策略，而不是专门去修改每台物理路由器上的路由配置文件。RCP集中式控制平台拥有集中的计算资源、整个自治系统内的IGP拓扑和传入自治系统的全部路由，能够更好地更准确地进行路由计算。
+
+除了以上的优势，RCP也存在一些缺点\cite{Feamster2004The}：
+\begin{itemize}
+    \item 因为RCP平台本身既支持可能有上百条的iBGP连接，也支持可能上千条的eBGP连接，所以虽然解决了iBGP的可扩展问题，但是平台本身的可扩展性较差，集中平台需要针对每一条更新的路由，为域内的每一台边界路由器计算出该前缀对应的最优路由，可能集中平台的计算能力会受到很大的挑战；
+    \item 集中平台都存在鲁棒性较差的特点，一旦集中控制平台的掌控控制单元的核心物理机器出现问题，整个自治系统的网络面临瘫痪的危险；
+    \item RCP在策略集中配置的过程中，未考虑对集中的策略配置进行检测，预防策略冲突、覆盖等问题；
+    \item RCP的路由计算仍属于传统的分布式路由计算，当收到一条更新路由时，需要计算N次得到N台路由器的最优出口路由。
+\end{itemize}
 
 \subsubsection{RFCP}
 RFCP（Route Flow Control Platform，图11）是基于SDN的思想，集中式地收集信息，在APP运行多台虚拟机，模拟自治系统环境，分布式地计算路由，并通过SDN平台传递给真实自治系统内的边界路由器。
