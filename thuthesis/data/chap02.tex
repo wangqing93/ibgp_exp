@@ -53,7 +53,7 @@ BGP路由计算\cite{DianeTeare2016CCNP}的过程是为了选择最优路由，B
     \item 步骤1：优选权重（Weight）最高的路由，Weight属性本地路由器有效。
     \item 步骤2：优选本地优先级（Local Preference）最高的路由，自治系统内有效。
     \item 步骤3：优选本地路由器初始的路由（本地初始的路由在BGP表中的下一跳显示为0.0.0.0）。
-    \item 步骤4：优选as-path最短的路由。
+    \item 步骤4：优选As-path最短的路由。
     \item 步骤5：优选源代码（Origin code）最小的路由（IGP<EGP<不完整路由)。
     \item 步骤6：优选MED（Multi-Exit Discriminators，多出口鉴别符）最低的路径，只有当所有待选路由来自同一AS时，路由器才会对比MED。网络管理员也可以通过设置路由器配置命令bgp always-compare-med，使得MED值总是可比。
     \item 步骤7：优选外部eBGP路由，而不是内部iBGP路由。
@@ -88,7 +88,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 \end{figure}
 
 \section{现有解决iBGP可扩展问题的相关研究}
-现有解决iBGP可扩展问题的相关研究，根据体系结构思想和设计，大致可以分成两类：分布式路由体系结构下的相关研究（路由反射\cite{rfc2796}、AS联邦\cite{rfc1965}）和集中式路由体系结构下的相关研究（SoftRouter\cite{lakshman2004}、RCP\cite{Feamster2004The}、RFCP\cite{Rothenberg}）。分布式路由体系结构中所有的网络功能等均由路由器实现，传统网络使用的是分布式路由体系结构，数据平面和控制平面的功能都集中在同一个平台（路由器）上实现，数据平面和控制平面的任何变动均会影响网络路由协议。集中式路由体系结构\cite{centralization}将数据平面和控制平面进行分离，在集中平台上实现网络的控制功能，减少了路由器的功能需求。
+现有解决iBGP可扩展问题的相关研究，根据体系结构思想和设计，大致可以分成两类：分布式路由体系结构下的相关研究（路由反射\cite{rfc2796}、AS联邦\cite{rfc1965}）和集中式路由体系结构下的相关研究（SoftRouter\cite{lakshman2004}、RCP\cite{Feamster2004The}、RFCP\cite{RothenbergHotSDN}）。分布式路由体系结构中所有的网络功能等均由路由器实现，传统网络使用的是分布式路由体系结构，数据平面和控制平面的功能都集中在同一个平台（路由器）上实现，数据平面和控制平面的任何变动均会影响网络路由协议。集中式路由体系结构\cite{centralization}将数据平面和控制平面进行分离，在集中平台上实现网络的控制功能，减少了路由器的功能需求。
 
 \subsection{分布式路由体系结构下的相关研究}
 传统的分布式体系结构：路由反射和AS联邦，解决了iBGP全连接引起的可扩展问题，但其设计本身可能导致选择路由不是最优出口、路由震荡、转发环路等问题。
@@ -140,7 +140,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 路由反射因为MED震荡，根本原因在于路由计算的过程中某些度量值（MED）不可比，如图\ref{fig:rr-med},因为不同时刻路由反射器针对同一Prefix产生的最优路由不同，导致其他路由反射器在不同时候收到的同一Prefix的路由集不同以至于该Prefix的最优路由不同，形成的MED震荡过程如下：
 
-注：传输到域内的3条路由，前缀、Weight、Local Preference、aspath均相同。
+注：传输到域内的3条路由，前缀、Weight、Local Preference、As-path均相同。
 
 \begin{itemize}
 \item 步骤1：RR-A从Client-A1和Client-A2收到前缀Prefix1的路由，先收到Client-A1，再收到Client-A2， 因为Client-A2到RR-A的IGPcost更小，所以RR-A收到2条Prefix1的路由，选择来自Client-A2的路由为Prefix1的最优路由；
@@ -163,7 +163,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 路由反射导致的拓扑震荡，根本原因是RR结构设计不合理，cluster内部的RR和client之间的IGPcost远大于RR和其他cluster内的client的IGPcost，路由决策主要依赖IGP信息，如图\ref{fig:rr-topo}，产生路由震荡的过程如下：
 
-注：传输到域内的3条路由，前缀、Weight、Local Preference、aspath、MED均相同。
+注：传输到域内的3条路由，前缀、Weight、Local Preference、As-path、MED均相同。
 
 \begin{itemize}
 \item 步骤1：RR-A收到来自Client-A的前缀为Prefix1的路由，RR-A只有1条路由，则选择来自Client-A的路由为Prefix1的最优路由，RR-A将Prefix1的来自Client-A的最优路由宣告给RR-B和RR-C；
@@ -201,7 +201,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 \end{figure}
 
 
-\subsubsection{AS联邦}
+\subsubsection{AS联邦\cite{rfc1965}}
 
 
 1996年，针对iBGP的可扩展问题，P.Traina等人在RFC1965\cite{rfc1965}中提出了AS联邦的方案。AS联邦的基本思想是将自治系统划分成多个子自治系统，子自治系统之间运行扩展的eBGP协议，子自治系统内部全连接，运行iBGP协议。
@@ -285,25 +285,67 @@ RCP集中式控制平台可以进行集中式的路由存储，路由器上不�
     \item RCP的路由计算仍属于传统的分布式路由计算，当收到一条更新路由时，需要计算N次得到N台路由器的最优出口路由。
 \end{itemize}
 
-\subsubsection{RFCP}
-RFCP（Route Flow Control Platform，图11）是基于SDN的思想，集中式地收集信息，在APP运行多台虚拟机，模拟自治系统环境，分布式地计算路由，并通过SDN平台传递给真实自治系统内的边界路由器。
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=\textwidth]{rfcp}
+  \caption{Route Flow Control Platform in the Internet\cite{RothenbergHotSDN}}
+  \label{fig:rfcp}
+\end{figure}
 
-RFCP可以集中式地对数据进行管理，通过流表规则下发对数据包和路由信息包进行转发，但RFCP结构中路由表冗余存储、路由计算未考虑IGP拓扑且仍为分布式计算，路由策略通过南向接口将策略传给控制器，未集中配置。
+\subsubsection{RFCP\cite{RothenbergHotSDN}}
+RFCP（Route Flow Control Platform，路由流控制平台）是基于SDN\cite{sdnsurvey2014ieee}（Software-Defined Network，软件定义网络）的思想，集中式地收集路由信息，在集中控制平台上运行SDN控制器，其北向接口运行一个应用，该应用计算出真实自治系统内每台边界路由器的最优路由，通过OpenFlow\cite{openflow}南向接口将计算出的最优路由传输给对应的边界路由器。该用于计算最优路由的应用，其内部运行多台虚拟机，模拟自治系统实际的网络环境，分布式地计算出前缀对应的每台边界路由器的最优路由，如图\ref{fig:rfcp}。
+
+RFCP可以集中式地对每台边界路由器的路由数据、路由策略进行管理，基于全部的路由信息，分布式计算出特定前缀下自治系统内每台边界路由器的最优出口，通过下发流表规则，引导数据信息包的转发。
+
+此外，RFCP方案也存在一些不足：
+\begin{itemize}
+\item RFCP方案需要使用轻量虚拟机模拟真实的网络环境，每台虚拟路由器均需存储整个路由表（主要为Loc-RIB-In）,对于自治系统内的边界路由器而言，每台边界路由器上存储的路由信息中大部分路由信息都是完全相同的，该RFCP的设计结构并没有考虑路由存储优化；
+\item 该RFCP方案中的路由计算并没有考虑IGP拓扑，且仍为分布式计算。假设自治系统内有N台边界路由器，有一条路由更新传到控制器，控制器将该路由信息传给Route Flow Server，Route Flow Server将该路由信息从对应实际拓扑的某台虚拟拓扑边界路由器输入，虚拟拓扑进行分布式计算N-N\verb+^+2次之后，将每台边界路由器的最优路由结果传输给控制器，控制器开始发下规则。对于到达某网络前缀的路由信息，所有自治系统内的边界路由器通过分布式计算获得最优路由至少执行N次计算（N为自治系统内边界路由器的数量），自治系统内部iBGP全连接结构下路径搜索过程中的信息计算最多N\verb+*+(N-1)\verb+/+2次；
+\item RFCP方案中，路由策略是通过南向接口将策略传给控制器，并没有进行集中配置，网络管理员在部署网络策略的时候需要到实际网络中的每台真实机器上去配置。
+\end{itemize}
 
 \section{集中式思路优化BGP的相关研究}
 
-\subsection{SDX}
-SDX
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=\textwidth]{sdx}
+  \caption{传统IXP和SDX的结构对比图}
+  \label{fig:sdx}
+\end{figure}
 
-\subsection{集中式路由计算}
-路由计算
+\subsection{软件定义的网络交换节点}
+边界网关协议BGP严格限制了网络流量如何在互联网中进行传输，其能够将数据包准确地转发到目的地，但因为以下几个BGP的特性，导致了互联网路由不够灵活以及难以管理\cite{sdx2015sigcomm}：
+\begin{itemize}
+  \item BGP是根据目的前缀对路由进行选择和转发，且最优路由决策的结果不受源地址的前缀影响;
+  \item 当某个运行着BGP协议的自治系统进行路由计算时，其会从和它直连的自治系统收到的该前缀的所有路由中，选择一条最优路由，这直接导致了最优路由的结果仅受到直连邻居的影响；
+  \item BGP协议影响路由决策的属性有很多，比如Weight、Local Preference、As-path、MED等等，这些属性对于路由决策的影响都是比较间接且模糊的，因为网络并不能直接定义优选的入站路径和出站路径。
+\end{itemize}
 
-\subsection{SDN+ibgp}
+针对现有互联网中BGP协议带来的这些路由问题，有学者提出了SDX\cite{sdx2015sigcomm}(Software Defined Internet Exchange Point, 软件定义的网络交换节点)来改善网络中的流量传输。
 
-SDN和BGPgggg\cite{conf/cfi/2014}
+
+传统的网络交换节点结构，与网络交换节点相连的自治系统会将自己的边界路由器与网路交换节点中的一个二层网络相连接，来作为数据平面进行数据包的转发；此外与网络交换节点相连的自治系统也会将自己的边界路由器与网络交换节点中的一个BGP服务器建立BGP连接，来作为控制平面进行路由信息的交互，如图\ref{fig:sdx}。
+
+
+SDX的基本概念是在一个网络交换节点上运行一个控制器，在控制器上连接一个SDN交换机。与网络交换节点相连接的自治系统的边界路由器上需要运行一个新的SDN应用，该SDN应用可以具体部署更灵活的路由策略，直接对流量进行丢弃、修改或者转发。SDX集中管理与IXP连接的自治系统的路由策略，SDX将多个自治系统的路由策略结合成一个一致性的针对物理的SDN交换机的策略。当SDX Controller收到路由更新信息时，根据所有自治系统的路由策略和全部的路由信息进行路由决策，然后下发流表到SDN交换机，如图\ref{fig:sdx}。
+
+
+SDX相当于将IXP平台作为一个集中平台，为了更好地部署路由策略，实现更优的路由，将与之相连的多个自治系统的路由策略进行集中管理，最终针对交换机生成一套统一的规则。该SDX方案采用Pyretic\cite{monsanto2013}语言对数据包进行match、set、forward等操作，以图\ref{fig:sdx}为例，语句“match(srcip,dstip)\verb+>>+fwd(B)”表示：match到特定的源地址到目的地址从B口转发出去。
+
+\subsection{数控分离的iBGP路由平台}
+为了解决iBGP的可扩展问题，有学者提出使用数据平面和控制平面分离的思路，在自治系统内建立一个单独的iBGP集中控制平台\cite{Oprescu2011Rethinking}，来解决iBGP面临的可扩展问题.该iBGP集中控制平台主要工作包含四部分：
+\begin{itemize}
+  \item 收集并存储所有的eBGP路由和内部的源路由信息;
+  \item 对自治系统内的边界路由器上的所有路由策略进行统一配置、存储和管理；
+  \item 当收到路由信息时，为自治系统内的每一台边界路由器计算最优路由；
+  \item 将计算出来的最优路由发给每台边界路由器。
+\end{itemize}
+
+为了增加平台的可扩展性，此iBGP集中平台被分成了N个子平台，自治系统内的每台边界路由器分别与不同的子平台建立iBGP连接，子平台之间建立数据通道实现路由信息的同步。当收到路由更新时，每个子平台仅需计算与之相连的边界路由器的最优路由，每个子平台并行计算互不干扰，极大提升了该iBGP集中控制平台的可扩展性。
 
 
 \section{本章小结}
 
-综合以上的调研，RR、AS联邦、3种集中式体系结构的方案虽然解决了iBGP可扩展问题，但RR和AS联邦带来了新问题；3种集中式方案对路由存储、计算、策略管理的某些方面进行优化，具体的对比见图13。
-本课题提出新结构，能够解决iBGP可扩展性，同时最大限度优化路由存储和计算、策略管理。路由表RIB仅存储在集中控制平台,路由计算在集中平台上计算，依赖自治系统内的网络拓扑信息，支持多输入多输出的计算模式，拟计算一次(最坏情况下计算N次)得出所有边界路由器针对Prefix的最优路由。
+本文在介绍BGP协议及其工作流程之后，总结归纳了iBGP协议存在的问题。随着现在网络规模的不断扩大，网络需求的不断增加，iBGP协议面临很多挑战，而可扩展性差是iBGP的主要问题。之后本文对现有解决iBGP可扩展问题的相关研究进行了综述，对学术界提出的RR、AS联邦、SoftRouter、RCP、RFCP等5种方案进行了详细的介绍和优缺点分析。RR和AS联邦虽然解决了iBGP可扩展问题，但带来了非最优路由、转发环路、路由震荡等新问题；SoftRouter、RCP、RFCP采用集中式路由的思路，解决了iBGP存在的可扩展问题，但均仅对路由存储、计算、策略管理的某些方面进行局部优化。集中式路由体系结构是解决路由问题的一个非常好的思路，对此本章最后对集中式思路优化BGP的相关研究也进行了综述。结合前人的工作情况，本文想要基于集中式的路由体系结构，提出基于集中平台的iBGP扩展协议的设计方案，解决其可扩展性问题的同时，优化路由存储、策略以及路由计算。
