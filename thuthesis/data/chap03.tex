@@ -160,7 +160,8 @@
 
 \subsection{与分布式路由体系结构方案的对比}
 
-学术界提出的2种比较典型的分布式路由体系结构方案分别是路由反射和AS联邦，具体的概念和存在的问题在第二章\ref{cha:review}进行了详细的综述，本文提出的RSCP-iBGP系统没有路由反射中非最优出口、转发环路、路由震荡等问题，也没有AS联邦中非最优出口和路由震荡等问题。
+学术界提出的2种比较典型的分布式路由体系结构方案分别是路由反射和AS联邦，具体的概念和存在的问题在第二章进行了详细的综述，本文提出的RSCP-iBGP系统没有路由反射中非最优出口、转发环路、路由震荡等问题，也没有AS联邦中非最优出口和路由震荡等问题。
+
 \subsubsection{解决路由反射存在问题}
 
 
@@ -225,11 +226,60 @@ AS联邦导致的非最优路由主要原因，在于自治系统内部的子自
 
 
 
+
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=0.9\textwidth]{rscp-asnomed}
+  \caption{解决AS联邦引起的路由震荡举例}
+  \label{fig:rscp-asnomed}
+\end{figure}
+
+
+AS联邦导致的路由震荡主要原因，在于自治系统内部的子自治系统之间仅传输最优路由，且最优路由两两比较中MED不可比，这直接导致某些子自治系统向外宣告的最优路由会随着接收到的新的路由信息产生变化，最后在路由收敛的过程中产生路由震荡。在图\ref{fig:rscp-asnomed}中，左侧为章节\ref{subsubsec:rr}中AS联邦结构中产生路由震荡的网络拓扑，右侧为左侧对应的RSCP-iBGP新系统下自治系统内的网络结构。在RSCP-iBGP的新系统中，Ra-2、Ra-3、Rb-2收到的3条由自治系统400向外宣告的192.168.1.0/24的路由信息，这3条路由信息均会传输到路由控制平台的Route-Server。因为传输到自治系统内的3条路由，前缀、Weight、Local Preference、As-path长度均相同，则在Route-Server的复式路由计算模块中，主要依据MED、IGPcost等计算自治系统内的所有边界路由器的最优路由。Route-Server的复式路由计算模块，采用集合缩小法，对于域内的所有边界路由器，Rb-2收到的eBGP路由优于Ra-3收到的eBGP路由，所以自治系统内的其他路由器的最优路由，主要根据IGPcost，在Ra-2收到的eBGP路由和Rb-2收到的eBGP路由，这两条路由之间选择。Ra-1的最优出口是Ra-2，Rb-1的最优出口是Ra-2，Ra-3的最优出口是Ra-2。在RSCP-iBGP新系统中，基于全部路由进行路由计算，且没有路由收敛的过程，解决了AS联邦的路由震荡问题。
+
 \subsection{与集中式路由体系结构方案的对比}
+
+
+学术界提出的3种比较典型的集中式路由体系结构方案分别是SoftRouter、RCP、RFCP，具体的概念和存在的问题在第二章进行了详细的综述，本文提出的RSCP-iBGP系统借鉴了集中式路由体系结构的概念，充分利用集中平台的资源和优势，对路由存储和路由计算进行了优化，总体。
+
 \subsubsection{SoftRouter}
+
+本文提出的RSCP-iBGP新系统的结构，相对于SoftRouter中CE和FE多对多的结构要简单很多，其平台本身的可扩展性要比SoftRouter要好；SoftRouter中对路由存储和路由计算并没有进行优化，主要思想是将其控制平面与数据平面分离，而RSCP-iBGP新系统中对路由存储、路由计算都进行了优化，均优化了一个数量级单位的指标；SoftRouter容易开发部署新的功能，而本文提出的RSCP-iBGP拥有集中平台这一显著优势，也能充分利用集中平台的资源，在集中平台上部署更多的网络功能，加强路由协议的安全性以及配置路由策略的灵活性等等。
+
 \subsubsection{RCP}
+RCP路由控制平台提出了集中式路由存储、策略配置、路由计算的思想，不仅在自治系统内部有集中控制平台，同时部署了RCP的自治系统之间也能通过RCP的平台进行域间的信息传输。本文提出的RSCP-iBGP新系统，和RCP的基本思想相同，但具体实现有所差异。本文提出的RSCP-iBGP系统平台的可扩展性更强，注重解决iBGP的问题，且在集中式的路由控制平台上实现了路由计算、路由存储的优化，路由策略也存储在集中控制平来。未来RSCP-iBGP也能充分利用集中平台的优势，实现路由策略的配置优化、路由配置正确性检测等方案。
+
+
 \subsubsection{RFCP}
+
+RFCP是集中式收集路由信息，通过构建虚拟的拓扑环境模拟真实自治系统内的网络环境，将虚拟拓扑环境中Full-Mesh的分布式计算结果传输给真实的网络结构。RFCP的实现需要部署SDN的可编程式交换机，在自治系统内的运行SDN控制器上运行应用程序来进行路由计算，集中式的对路由信息进行管理。但其路由表在虚拟的拓扑环境中仍冗余存储，路由计算属于传统的分布式计算方法，策略配置仍需要在每台边界路由器上进行配置。RSCP-iBGP新系统与RFCP相比，存在很多优势，其不仅将路由存储空间和路由计算次数优化了一个数量级的标准，集中平台的优势和志愿，也能帮助网络管理员更好地管理网络，配置策略。
+
+
+\begin{table}[h]
+	\centering
+	\caption{RSCP-iBGP新系统与现有解决iBGP可扩展问题的相关研究的对比}
+    \label{tab:compare}
+	\begin{tabular}{|l|c|c|c|c|c|c|}
+		\hline
+		关注点 & RR & AS联邦 & SoftRouter & RCP & RFCP & RSCP-iBGP \\ \hline
+		路由可扩展性:不需要全连接 &  $\surd$ &  $\surd$  & $\surd$  &$\surd$ & $\surd$  &$\surd$  \\ \hline
+        路由计算:基于全部路由 & $\times$ &  $\times$  & $\surd$  &$\surd$ & $\surd$  &$\surd$  \\ \hline
+        路由计算:no MED引起的震荡 &  $\times$ &  $\times$  & $\surd$  &$\surd$ & $\surd$  &$\surd$  \\ \hline
+        路由计算次数优化&  $\times$ &  $\times$  & $\times$  &$\times$ & $\times$  &$\surd$  \\ \hline
+        路由表集中存储&  $\times$ &  $\times$  & $\surd$  &$\surd$ & $\times$  &$\surd$  \\ \hline
+        路由表存储优化&  $\times$ &  $\times$  & $\times$  &$\times$ & $\times$  &$\surd$  \\ \hline
+        路由策略集中配置&  $\times$ &  $\times$  & $\times$  & $\surd$ & $\times$  &$\surd$  \\ \hline
+	\end{tabular}
+\end{table}
+
 \subsection{总结}
 
+本章节主要论证本文提出的RSCP-iBGP新系统，相比于现有的学术界提出的2种分布式路由体系结构下的方案、3种集中式路由体系结构下的方案具有的优势，以及该方案的设计目标和价值意义。概括性的比较如图\ref{tab:compare}所示。
+
+
+
 \section{本章小结}
-总结
+
+本文提出的RSCP-iBGP新系统不仅能解决iBGP存在的可扩展问题，还能够在路由计算的过程中基于全部的路由，达到与Full-Mesh结构下的路由信息扩散传输相同的程度。在此基础上，RSCP-iBGP新系统利用集中平台的优势和资源，对传统的分布式的路由存储和路由计算进行了优化，将存储空间以及当存在路由更新时自制系统内的路由计算次数均优化了一个数量级的标准。本章节详细介绍了RSCP-iBGP的系统架构、路由存储和优化方案，以及将该系统与现有解决iBGP可扩展研究方案进行了对比分析，论证了该RSCP-iBGP新系统的设计合理性、显著优势等理论。
+
