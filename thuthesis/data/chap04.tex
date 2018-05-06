@@ -40,6 +40,8 @@ Quagga中路由表的存储使用radix二叉树\cite{quaggaThesis}存储结构�
 综合以上的文字解释，Quagga中实现BGP三张表的存储结构如图\ref{fig:storage}。
 \subsection{路由更新流程}
 
+需要一张路有更新的流程图标，参考孔祥欣师兄的论文？不能经常出现函数名，应标注模块名？
+
 路由更新过程是虚拟路由器进行路由处理流程的主要部分，对应到Quagga中bgpd进程实现，路由更新的步骤如下：
 \begin{itemize}
   \item 运行Quagga的虚拟路由器先通过bgp\_establish()函数与对等体peer建立连接；
@@ -57,23 +59,18 @@ Quagga中路由表的存储使用radix二叉树\cite{quaggaThesis}存储结构�
 Quagga的bgpd进程中路由算法主要是在bgp\_best\_selection()函数中实现的。针对前缀Prefix，在bgp\_table中找到该前缀对应的所有路由信息bgp\_node。路由信息的存储使用链表的数据结构，最新的路由会插在表头，所以bgp\_node存储的同一前缀的路由信息是按照更新时间由近及远进行存储。将该前缀对应的路由信息由近及远两两通过bgp\_info\_cmp()进行比较，得到前缀的最优路由。两两比较的路由算法见章节\ref{subsec:calculation}。
 
 
-\section{系统详细设计}
-模块设计图总体、项目的模块设计
+\section{系统设计与实现}
+每个网元内部的协议报文处理流程
 
-\subsection{系统的工作流程}
-
-\subsection{系统的模块设计}
-
-\subsection{复合式路由算法}
-
-
-\section{系统实现}
 
 \subsection{边界路由器}
 路由宣告
 \subsection{路由控制平台}
 \subsubsection{路由存储}
 \subsubsection{路由计算}
+具体实现方法和算法分析
+路由算法的伪代码
+
 \subsection{通信接口}
 BGP协议
 \section{本章小结}
