@@ -1689,7 +1689,7 @@ bgp_process_main (struct work_queue *wq, void *data)
 static wq_item_status
 bgp_process_main2 (struct work_queue *wq, void *data)
 {
-  zlog_info("bgp_route.c call bgp_process_main");
+  zlog_info("bgp_route.c call bgp_process_main2");
   struct bgp_process_queue2 *pq = data;
   struct bgp *bgp = pq->bgp;
   struct bgp_node *rn = pq->rn;
@@ -1702,7 +1702,7 @@ bgp_process_main2 (struct work_queue *wq, void *data)
   struct listnode *node, *nnode;
   struct peer *peer;
   
-  zlog_info("bgp_route.c file bgp_process_main func: delete bgp_best_selection********");
+  zlog_info("bgp_route.c file bgp_process_main2 func: delete bgp_best_selection********");
   /* Best path selection. */
   //bgp_best_selection (bgp, rn, &old_and_new, afi, safi);
   //old_select = old_and_new.old;
@@ -1743,7 +1743,7 @@ bgp_process_main2 (struct work_queue *wq, void *data)
       UNSET_FLAG (new_select->flags, BGP_INFO_MULTIPATH_CHG);
     }
 
-   zlog_info("bgp_route.c file bgp_process_main func: start announce to other peer");
+   zlog_info("bgp_route.c file bgp_process_main2 func: start announce to other peer");
   /* Check each BGP peer. */
   /*wq change mark start*/
   for (ALL_LIST_ELEMENTS (bgp->peer, node, nnode, peer))

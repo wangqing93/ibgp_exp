@@ -849,14 +849,14 @@ bgp_attr_unintern (struct attr **pattr)
     }
   
   /* If reference becomes zero then free attribute object. */
-  if (attr->refcnt == 0)
-    {
-      ret = hash_release (attrhash, attr);
-      assert (ret != NULL);
-      bgp_attr_extra_free (attr);
-      XFREE (MTYPE_ATTR, attr);
-      *pattr = NULL;
-    }
+  // if (attr->refcnt == 0)
+  //   {
+  //     ret = hash_release (attrhash, attr);
+  //     assert (ret != NULL);
+  //     bgp_attr_extra_free (attr);
+  //     XFREE (MTYPE_ATTR, attr);
+  //     *pattr = NULL;
+  //   }
 
   bgp_attr_unintern_sub (&tmp);
 }
@@ -2669,6 +2669,7 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
 		      struct prefix *p, afi_t afi, safi_t safi,
 		      struct peer *from, struct prefix_rd *prd, u_char *tag)
 {
+  zlog_info("wq: input bgp_packet_attribute");
   size_t cp;
   size_t aspath_sizep;
   struct aspath *aspath;
@@ -2703,38 +2704,50 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
       && (! CHECK_FLAG (peer->af_flags[afi][safi], PEER_FLAG_AS_PATH_UNCHANGED)
 	  || attr->aspath->segments == NULL)
       && (! CHECK_FLAG (peer->af_flags[afi][safi], PEER_FLAG_RSERVER_CLIENT)))
-    {    
+  { 
+      zlog_info("wq: as-path when peer->sort = ebgp");   
       aspath = aspath_dup (attr->aspath);
 
       if (CHECK_FLAG(bgp->config, BGP_CONFIG_CONFEDERATION))
-	{
-	  /* Strip the confed info, and then stuff our path CONFED_ID
-	     on the front */
-	  aspath = aspath_delete_confed_seq (aspath);
-	  aspath = aspath_add_seq (aspath, bgp->confed_id);
-	}
+      {
+               /* Strip the confed info, and then stuff our path CONFED_ID
+               on the front */
+        aspath = aspath_delete_confed_seq (aspath);
+        aspath = aspath_add_seq (aspath, bgp->confed_id);
+      }
       else
-	{
-	  if (peer->change_local_as) {
-            /* If replace-as is specified, we only use the change_local_as when
+      {
+        if (peer->change_local_as) 
+        {
+               /* If replace-as is specified, we only use the change_local_as when
                advertising routes. */
-            if( ! CHECK_FLAG (peer->flags, PEER_FLAG_LOCAL_AS_REPLACE_AS) ) {
-              aspath = aspath_add_seq (aspath, peer->local_as);
-            }
-	    aspath = aspath_add_seq (aspath, peer->change_local_as);
-          } else {
+          if( ! CHECK_FLAG (peer->flags, PEER_FLAG_LOCAL_AS_REPLACE_AS) ) 
+          {
             aspath = aspath_add_seq (aspath, peer->local_as);
           }
-	}
-    }
+          aspath = aspath_add_seq (aspath, peer->change_local_as);
+        } 
+        else 
+        {
+          aspath = aspath_add_seq (aspath, peer->local_as);
+        }
+      }
+  }
   else if (peer->sort == BGP_PEER_CONFED)
-    {
+  {
+      zlog_info("wq: as-path when peer->sort = confed");   
       /* A confed member, so we need to do the AS_CONFED_SEQUENCE thing */
       aspath = aspath_dup (attr->aspath);
       aspath = aspath_add_confed_seq (aspath, peer->local_as);
-    }
+  }
   else
+  {
+    zlog_info("wq: as-path when peer->sort = ibgp");  
     aspath = attr->aspath;
+    aspath = aspath_add_seq (aspath, attr->extra->weight);
+    zlog_info("wq: 5 add weight in aspath %s", aspath_print(aspath));
+    zlog_info("wq: add some value %d", attr->extra->weight);
+  }
 
   /* If peer is not AS4 capable, then:
    * - send the created AS_PATH out as AS4_PATH (optional, transitive),
@@ -2749,8 +2762,10 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
   stream_putc (s, BGP_ATTR_AS_PATH);
   aspath_sizep = stream_get_endp (s);
   stream_putw (s, 0);
-  stream_putw_at (s, aspath_sizep, aspath_put (s, aspath, use32bit));
-  
+  stream_putw_at (s, aspath_sizep, aspath_put (s, aspath, use32bit));  
+
+
+  zlog_info("wq: add weight in aspath %s finished", aspath_print(aspath));
   /* OLD session may need NEW_AS_PATH sent, if there are 4-byte ASNs 
    * in the path
    */
@@ -3046,6 +3061,7 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
     stream_put (s, attr->extra->transit->val, attr->extra->transit->length);
 
   /* Return total size of attribute. */
+
   return stream_get_endp (s) - cp;
 }
 

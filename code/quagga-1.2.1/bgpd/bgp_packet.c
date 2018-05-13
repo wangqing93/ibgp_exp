@@ -269,8 +269,11 @@ bgp_update_packet (struct peer *peer, afi_t afi, safi_t safi)
         }
 
       /* Synchnorize attribute.  */
-      if (adj->attr)
-	bgp_attr_unintern (&adj->attr);
+      if (adj->attr){
+        zlog_info("wq: start bgp_attr_unintern function in bgp_update_packet func in bgp_packet.c");
+        bgp_attr_unintern (&adj->attr);
+      }
+	
       else
 	peer->scount[afi][safi]++;
 
