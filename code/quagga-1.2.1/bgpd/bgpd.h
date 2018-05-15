@@ -658,6 +658,7 @@ struct bgp_nlri
 #define BGP_ATTR_AS_PATHLIMIT                   21
 #define BGP_ATTR_ENCAP                          23
 #define BGP_ATTR_LARGE_COMMUNITIES              32
+#define BGP_ATTR_WEIGHT                         31
 
 /* BGP update origin.  */
 #define BGP_ORIGIN_IGP                           0

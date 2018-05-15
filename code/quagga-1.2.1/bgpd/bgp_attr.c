@@ -2705,7 +2705,6 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
 	  || attr->aspath->segments == NULL)
       && (! CHECK_FLAG (peer->af_flags[afi][safi], PEER_FLAG_RSERVER_CLIENT)))
   { 
-      zlog_info("wq: as-path when peer->sort = ebgp");   
       aspath = aspath_dup (attr->aspath);
 
       if (CHECK_FLAG(bgp->config, BGP_CONFIG_CONFEDERATION))
@@ -2735,18 +2734,13 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
   }
   else if (peer->sort == BGP_PEER_CONFED)
   {
-      zlog_info("wq: as-path when peer->sort = confed");   
       /* A confed member, so we need to do the AS_CONFED_SEQUENCE thing */
       aspath = aspath_dup (attr->aspath);
       aspath = aspath_add_confed_seq (aspath, peer->local_as);
   }
   else
   {
-    zlog_info("wq: as-path when peer->sort = ibgp");  
     aspath = attr->aspath;
-    aspath = aspath_add_seq (aspath, attr->extra->weight);
-    zlog_info("wq: 5 add weight in aspath %s", aspath_print(aspath));
-    zlog_info("wq: add some value %d", attr->extra->weight);
   }
 
   /* If peer is not AS4 capable, then:
@@ -2764,8 +2758,6 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
   stream_putw (s, 0);
   stream_putw_at (s, aspath_sizep, aspath_put (s, aspath, use32bit));  
 
-
-  zlog_info("wq: add weight in aspath %s finished", aspath_print(aspath));
   /* OLD session may need NEW_AS_PATH sent, if there are 4-byte ASNs 
    * in the path
    */
@@ -3061,6 +3053,10 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
     stream_put (s, attr->extra->transit->val, attr->extra->transit->length);
 
   /* Return total size of attribute. */
+   stream_putc (s, BGP_ATTR_FLAG_TRANS);
+   stream_putc (s, BGP_ATTR_WEIGHT);
+   stream_putc (s, 2);
+   stream_putw (s, attr->extra->weight);
 
   return stream_get_endp (s) - cp;
 }
