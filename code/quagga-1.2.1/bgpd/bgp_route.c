@@ -1689,7 +1689,7 @@ bgp_process_main (struct work_queue *wq, void *data)
 static wq_item_status
 bgp_process_main2 (struct work_queue *wq, void *data)
 {
-  zlog_info("bgp_route.c call bgp_process_main2");
+  zlog_info("wq: bgp_route.c call bgp_process_main2");
   struct bgp_process_queue2 *pq = data;
   struct bgp *bgp = pq->bgp;
   struct bgp_node *rn = pq->rn;
@@ -1702,7 +1702,7 @@ bgp_process_main2 (struct work_queue *wq, void *data)
   struct listnode *node, *nnode;
   struct peer *peer;
   
-  zlog_info("bgp_route.c file bgp_process_main2 func: delete bgp_best_selection********");
+  zlog_info("wq: bgp_route.c file bgp_process_main2 func: delete bgp_best_selection********");
   /* Best path selection. */
   //bgp_best_selection (bgp, rn, &old_and_new, afi, safi);
   //old_select = old_and_new.old;
@@ -1712,7 +1712,7 @@ bgp_process_main2 (struct work_queue *wq, void *data)
    new_select = pq->new;
 
 
-   zlog_info(" new_select info aspath is %s", aspath_print(new_select->attr->aspath));
+   zlog_info("wq: new_select info aspath is %s", aspath_print(new_select->attr->aspath));
         
 
   /* Nothing to do. */
@@ -1749,12 +1749,12 @@ bgp_process_main2 (struct work_queue *wq, void *data)
   for (ALL_LIST_ELEMENTS (bgp->peer, node, nnode, peer))
     {
       //peer_sort(bgp->peer_self) == BGP_PEER_IBGP &&
-      if (peer_sort(peer) == BGP_PEER_EBGP && pq->sort == BGP_PEER_IBGP)
+      if (peer_sort(peer) == BGP_PEER_EBGP && new_select->peer->sort == BGP_PEER_IBGP)
       {
         zlog_info("BGP announce prefix which is to ebgp peer %s aspath is %s", peer->host, aspath_print(new_select->attr->aspath));
         bgp_process_announce_selected (peer, new_select, rn, afi, safi);
       }
-      if (peer_sort(peer) == BGP_PEER_IBGP && pq->sort == BGP_PEER_EBGP)
+      if (peer_sort(peer) == BGP_PEER_IBGP && new_select->peer->sort == BGP_PEER_EBGP)
       {
         zlog_info("BGP announce prefix which is to ibgp peer  %s aspath is %s", peer->host, aspath_print(new_select->attr->aspath));
         bgp_process_announce_selected (peer, new_select, rn, afi, safi);

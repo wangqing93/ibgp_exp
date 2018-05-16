@@ -3053,10 +3053,14 @@ bgp_packet_attribute (struct bgp *bgp, struct peer *peer,
     stream_put (s, attr->extra->transit->val, attr->extra->transit->length);
 
   /* Return total size of attribute. */
-   stream_putc (s, BGP_ATTR_FLAG_TRANS);
-   stream_putc (s, BGP_ATTR_WEIGHT);
-   stream_putc (s, 2);
-   stream_putw (s, attr->extra->weight);
+
+  if (peer->sort == BGP_PEER_IBGP) {
+    stream_putc (s, BGP_ATTR_FLAG_TRANS);
+    stream_putc (s, BGP_ATTR_WEIGHT);
+    stream_putc (s, 2);
+    stream_putw (s, attr->extra->weight);
+  }
+   
 
   return stream_get_endp (s) - cp;
 }
