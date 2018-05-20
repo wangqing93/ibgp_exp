@@ -77,7 +77,7 @@ RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系
     \label{tab:weight-example}
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline
-		network & next-hop & metric & LocPrf & Weight & Path & ebgp-next-hop \\ \hline
+		network & received-peer & metric & LocPrf & Weight & Path & ebgp-next-hop \\ \hline
 		192.168.1.0 & C1 & 0 & &  &400,i & R3 \\ \hline
         192.168.1.0 & C1 & 10 & &  &200,400,i & R1 \\ \hline
         192.168.1.0 & C2 & 5 & &  &300,400,i & R2 \\ \hline
@@ -99,7 +99,7 @@ RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系
     \label{tab:c1-loc-rib}
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline
-		network & next-hop & metric & LocPrf & Weight & Path & ebgp-next-hop \\ \hline
+		network & received-peer & metric & LocPrf & Weight & Path & ebgp-next-hop \\ \hline
 		192.168.1.0 & C1 & 0 & &  &400,i & R3 \\ \hline
         192.168.1.0 & C1 & 10 & & 150 &200,400,i & R1 \\ \hline
         192.168.1.0 & C2 & 5 & &  &300,400,i & R2 \\ \hline
@@ -136,8 +136,8 @@ RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系
 \begin{itemize}
     \item 步骤7：优选去往BGP下一跳最短的路径，即删除集合中IGPcost不是最小的路由，留下IGPcost最小的路由。
     \item 步骤8：优选eBGP最老的路由，减少路由反复启动和禁用的风险,即删除集合中eBGP不是最老的路由，留下eBGP最老的路由。
-    \item 步骤9：优选eBGP邻居发给Route-Client路由的边界路由器ID值router-id最低的路由（该eBGP邻居的Route-id需传输到集中平台）。
-    \item 步骤10：优选从eBGP邻居收到的其路由器IP地址最小的路由（该eBGP邻居的IP地址需传输到集中平台）。
+    \item 步骤9：优选eBGP邻居发给Route-Client路由的边界路由器ID值router-id最低的路由（该eBGP邻居的Route-id在集中平台存储管理）。
+    \item 步骤10：优选从eBGP邻居收到的其路由器IP地址最小的路由（该eBGP邻居的IP地址在集中平台存储管理）。
 \end{itemize}
 
 

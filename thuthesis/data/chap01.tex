@@ -15,9 +15,9 @@ BGP在AS内部所有路由器两两之间建立iBGP（Internal Border Gateway Pr
 本文对基于集中平台的RSCP-iBGP系统进行了实现、测试和评估，主要进行了以下工作：
 \begin{enumerate}
 \item 对BGP协议及其工作流程、域间路由协议iBGP存在的问题、以及解决iBGP存在问题的RR、AS联邦、SofterRouter、RCP、RFCP等研究方案、集中式思路优化BGP的相关研究进行了综述；
-\item 介绍基于集中平台的RSCP-iBGP系统的整体框架，重点介绍路由存储和复式路由计算模块，并将该系统与现有的5种研究方案进行对比分析；
+\item 介绍基于集中平台的RSCP-iBGP系统的整体框架，重点介绍RSCP-iBGP系统中集中平台、边界路由器、扩展的iBGP路由协议三大部件，并将该系统与现有的5种研究方案进行对比分析；
 \item 对虚拟路由器Quagga的系统结构及路由更新等细节进行介绍，设计并实现基于集中平台的RSCP-iBGP系统；
-\item 对RSCP-iBGP系统进行功能验证和系统评价实验，对RSCP-iBGP系统进行协议的一致性测试，验证RSCP-iBGP系统的功能一致性和性能优劣。
+\item 对RSCP-iBGP系统进行功能验证实验，对RSCP-iBGP系统进行协议的一致性测试，通过验证RSCP-iBGP系统的功能实现性和一致性。
 \end{enumerate}
 
 
@@ -27,8 +27,8 @@ BGP在AS内部所有路由器两两之间建立iBGP（Internal Border Gateway Pr
 \begin{itemize}
 \item 第一章：引言，介绍研究背景和主要工作；
 \item 第二章：相关研究综述，对BGP协议及工作流程、iBGP存在问题、iBGP可扩展性问题的研究现状、集中式思路优化BGP的相关研究等进行了综述；
-\item 第三章：描述了基于集中平台的RSCP-iBGP系统的整体框架、系统模块，将其与已有方案进行对比分析；
-\item 第四章：设计并实现基于集中平台的RSCP-iBGP系统，包括边界路由器、路由控制平台以及通信接口；
-\item 第五章：对基于集中平台的RSCP-iBGP系统进行仿真实验和一致性测试，设计实验拓扑和一致性测试集，在实验床上运行扩展型iBGP协议，验证RSCP-iBGP系统的功能一致性和性能优劣；
+\item 第三章：描述了基于集中平台的RSCP-iBGP系统的整体框架、系统部件，将其与已有方案进行对比分析；
+\item 第四章：介绍软件路由器Quagga中BGP协议的实现细节，设计并实现基于集中平台的RSCP-iBGP系统，包括边界路由器、路由控制平台以及通信接口；
+\item 第五章：对基于集中平台的RSCP-iBGP系统进行仿真实验和一致性测试，设计实验拓扑和一致性测试集，在实验床上运行扩展型iBGP协议，验证RSCP-iBGP系统的功能实现性和一致性；
 \item 第六章：总结和进一步研究工作。
 \end{itemize}

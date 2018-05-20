@@ -75,7 +75,7 @@
   \begin{itemize}
     \item 针对iBGP可扩展问题，提出了基于集中平台的RSCP-iBGP系统，其中对路由存储、路由计算进行了优化，并将该系统与已有的5种方案进行对比分析，明确RSCP-iBGP系统相比于现有研究方案的优势。
     \item 设计RSCP-iBGP系统的工作流程、具体模块以及复式的最优路由计算算法，实现RSCP-iBGP系统中的三大模块：边界路由器，路由控制平台上的Route-Server，以及边界路由器与Route-Server之间的通信协议。
-    \item 通过实验，对RSCP-iBGP系统进行功能验证和性能评价。通过一致性测试工具PITSv3编写测试例对RSCP-iBGP系统进行功能一致性测试，最终验证了RSCP-iBGP系统的功能和设计相一致，性能更好。
+    \item 通过实验，对RSCP-iBGP系统进行功能验证。通过一致性测试工具PITSv3编写测试例对RSCP-iBGP系统进行功能一致性测试，最终验证了RSCP-iBGP系统的功能和设计相一致。
   \end{itemize}
 
 \end{cabstract}
@@ -87,9 +87,9 @@
    With the continuous expansion of network scale, internal border gateway protocol iBGP which requires a logical full mesh occurs scalability issue. Previous studies have solved the iBGP scalability issue, but brings new challenges, such as route reflection, AS federation, SoftRouter, RCP, RFCP, etc. This thesis proposes RSCP-iBGP system based on centralized platform to solve the iBGP scalability issue, which also optimizes routing storage and routing calculation. If there are N border routers in one Autonomous system, Full-Mesh IBGP needs to maintain N squared iBGP connections, to store N routing tables , and routing computing needs to execute N squared times in the process of routing convergence. RSCP-iBGP system only needs to maintain N iBGP connections, about one storage routing table, and routing computing needs to execute N times. The RSCP-iBGP system based on centralized platform contributes that size of routing storage and the number of routing computation are both reduced by an order of magnitude, And it improves the internal inter-domain routing protocols iBGP performance and scalability. The contributions of the work include:
 
    \begin{itemize}
-    \item To solve scalability issue, the thesis puts forward the RSCP-iBGP system based on centralized platform, which optimizes routing storage and routing calculation. By comparing RSCP-iBGP system with and existing five schemes, the advantages of RSCP-iBGP system are confirmed. 
+    \item To solve scalability issue, the thesis puts forward the RSCP-iBGP system based on centralized platform, which optimizes routing storage and routing calculation. By comparing RSCP-iBGP system with and existing five schemes, the advantages of RSCP-iBGP system are confirmed.
     \item Design the work process, specific modules， multiple routing calculation algorithms, and RSCP-iBGP system realized three modules: border router, Route-Server running in the route control platform and the communication protocol.
-    \item Execute functional verification and performance evaluation of RSCP-iBGP system. The conformance testing of the RSCP-iBGP system was conducted by the conformance testing tool PITSv3, which finally verified that the realization of the RSCP-iBGP system is consistent with the design and its performance is better.
+    \item Execute functional verification of RSCP-iBGP system. The conformance testing of the RSCP-iBGP system was conducted by the conformance testing tool PITSv3, which finally verified that the realization of the RSCP-iBGP system is consistent with the design.
   \end{itemize}
 \end{eabstract}
 
