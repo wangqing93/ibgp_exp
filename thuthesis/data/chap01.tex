@@ -8,15 +8,15 @@
 
 BGP在AS内部所有路由器两两之间建立iBGP（Internal Border Gateway Protocol, iBGP）会话以交换域间路由，iBGP会话的数量是路由器平方数量级的，大型AS内部边界路由器的数目几百到上千，难以承受巨大的iBGP负担。学术界2000年左右提出了路由反射（Router Reflector, RR）和AS联邦的解决方案，两种方案虽然解决了全连接引起的可扩展性差的问题，但因为部分边界路由器缺少路由信息，带来了新的问题，比如非最优出口路由、转发环路、路由震荡等等，没有很好的解决当前网络环境下，iBGP面临的挑战。之后，有学者提出了基于集中式体系结构的SoftRouter、RCP（Route Control Platform）、RFCP（Route Flow Control Platform）等研究方案，在解决iBGP的可扩展问题的同时，保证所有边界路由器的路由决策基于全部的路由信息，解决了路由反射和AS联邦引发的新问题，同时该体系结构为路由存储、策略管理、路由计算提供了集中处理和管理的平台，使得内部域间路由具有很大的优化空间。
 
-现有的基于集中式体系结构的iBGP研究，对路由存储、策略管理、路由计算的某些方面进行了优化，本文希望综合已有研究，在解决iBGP可扩展性的同时，将iBGP的路由存储、策略管理、路由计算的优化达到最大。
+现有的基于集中式体系结构的iBGP研究，对路由存储、策略管理、路由计算的某些方面进行了优化，本文希望综合已有研究，在解决iBGP可扩展性的同时，对iBGP的路由存储、策略管理、路由计算等部分尽可能地进行优化。
 
 \section{主要工作}
 
-本文对基于集中平台的RSCP-iBGP系统进行了实现、测试和评估，主要进行了以下工作：
+本文提出了基于集中平台的iBGP新架构RSCP-iBGP（Route Server Control Platform iBGP），并对该RSCP-iBGP系统进行了实现、测试和评估，主要进行了以下工作：
 \begin{enumerate}
 \item 对BGP协议及其工作流程、域间路由协议iBGP存在的问题、以及解决iBGP存在问题的RR、AS联邦、SofterRouter、RCP、RFCP等研究方案、集中式思路优化BGP的相关研究进行了综述；
 \item 介绍基于集中平台的RSCP-iBGP系统的整体框架，重点介绍RSCP-iBGP系统中集中平台、边界路由器、扩展的iBGP路由协议三大部件，并将该系统与现有的5种研究方案进行对比分析；
-\item 对虚拟路由器Quagga的系统结构及路由更新等细节进行介绍，设计并实现基于集中平台的RSCP-iBGP系统；
+\item 设计并实现基于集中平台的RSCP-iBGP系统；
 \item 对RSCP-iBGP系统进行功能验证实验，对RSCP-iBGP系统进行协议的一致性测试，通过验证RSCP-iBGP系统的功能实现性和一致性。
 \end{enumerate}
 

@@ -5,7 +5,7 @@
 \section{本章引言}
 可扩展问题是互联网iBGP协议的重要问题，随着网络规模和需求的不断增加，大多数自治系统已经不采用传统的Full-mesh的iBGP连接结构，而是使用配置比较方便、技术比较成熟的路由反射。现有的解决iBGP可扩展问题的思路可分为两种：分布式路由体系结构、集中式路由体系结构。分布式路由体系结构下的相关研究主要有路由反射和AS联邦，其解决了iBGP的可扩展问题，但是带来了新的问题，比如：非最优出口、转发环路、路由震荡。而集中式路由体系结构的相关研究主要有SoftRouter、RCP、RFCP三种代表性方案，这三种方案解决了iBGP的可扩展问题，但也分别存在集中平台本身的可扩展性差、路由存储冗余重复、未优化的传统路由计算方式等等问题。
 
-本文基于数据平面和控制平面分离的思想，提出了基于集中平台的iBGP系统结构，将自治系统内部的路由存储、策略管理、路由计算以及路由转发交换功能合理划分为集中平台和自治系统内边界路由器上执行的两部分。该基于集中平台的iBGP系统结构处理路由信息的基本流程为：
+本文基于路由决策、存储集中化的思路，提出了基于集中平台的iBGP系统结构，将自治系统内部的路由存储、策略管理、路由计算以及路由转发交换功能合理划分为集中平台和自治系统内边界路由器上执行的两部分。该基于集中平台的iBGP系统结构处理路由信息的基本流程如图\ref{fig:rscp-ibgp1}，主要部分：
 \begin{itemize}
   \item 自治系统内的边界路由器从某eBGP邻居收到路由信息，如果本地路由器配置了需要保存从该邻居过来的路由信息，则保存该路由信息到Adj-RIB-In。经过入站策略后，将过滤更新的路由通过iBGP协议将其发送到集中平台;
   \item 集中平台将收到的路由信息存入Loc-RIB、为每台自治系统内的边界路由器计算出最优路由，将最优路由通过iBGP协议发送给边界路由器；
@@ -34,10 +34,10 @@
 \section{新型iBGP路由系统}
 本文提出的自治系统内部的基于集中平台的iBGP新架构命名为RSCP-iBGP（Route Server Control Platform iBGP）。RSCP-iBGP基本思想是将自治系统内边界路由器的控制平面和数据平面进行部分分离，将边界网关协议BGP中的路由计算、路由存储从边界路由器中剥离出来，交由独立的、且逻辑比较集中的运行在路由控制平台的Route-Server执行，而自治系统内部的普通边界路由器作为Route-Client对路由信息进行接收转发、入站出站过滤更新等操作。
 
-RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系统内部，主要包含三部分：自治系统内部的路由控制平台（Route-Server），自治系统内部的多台边界路由器（Route-Client），以及自治系统内部边界路由器与路由控制平台的标准通信接口(iBGP协议)，具体流程如图\ref{fig:rscp-ibgp}：
+RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系统内部，主要包含三部分：自治系统内部的路由控制平台（Route-Server），自治系统内部的多台边界路由器（Route-Client），以及自治系统内部边界路由器与路由控制平台的通信接口(扩展的iBGP协议)，具体流程如图\ref{fig:rscp-ibgp}：
 \begin{itemize}
   \item 通信协议使用iBGP协议，来传输BGP路由信息;
-  \item 路由控制平台上运行1台Route-Server进行集中式的路由存储、路由计算。当Route-Server收集路由模块，收集到自治系统内部边界路由器Route-Client-Ri发来的更新路由消息，Route-Server现将该路由加入对应的Adj-RIB-In表,之后该路由经过Route-Client-Ri的入站策略后进入Loc-RIB增量存储模块，存储经过入站策略的路由信息，将Loc-RIB表以及IGPcost值输入路由复式计算模块，得到自治系统每台边界路由的针对该前缀的最优路由，之后在路由集中控制平台上分别经过每台边界路由器的出站策略，更新每台边界路由器对应的Adj-RIB-Out表，将其结果输入到分发路由模块，分发路由模块则分别将经过出站策略的该前缀的最优路由传输给自治系统内的每台边界路由；
+  \item 路由控制平台上运行1台Route-Server进行集中式的路由存储、路由计算。当Route-Server收集路由模块，收集到自治系统内部边界路由器Route-Client-Ri发来的更新路由消息，Route-Server先将该路由加入对应的Adj-RIB-In表,之后该路由经过Route-Client-Ri的入站策略后进入Loc-RIB增量存储模块，存储经过入站策略的路由信息，将Loc-RIB表以及IGPcost值输入路由复式计算模块，得到自治系统每台边界路由的针对该前缀的最优路由，之后在路由集中控制平台上分别经过每台边界路由器的出站策略，更新每台边界路由器对应的Adj-RIB-Out表，将其结果输入到分发路由模块，分发路由模块则分别将经过出站策略的该前缀的最优路由传输给自治系统内的每台边界路由；
   \item 自治系统内部的边界路由器Route-Client：
         \begin{itemize}
           \item 当收到其他自治系统发来的eBGP路由时，根据收到路由eBGP邻居的配置，决定是否将其存储到对应eBGP邻居的Adj-RIB-In。边界路由器Route-Client将收到的路由信息进行入站策略的过滤更新，将得到的路由通过iBGP协议发送给路由控制平台上的Route-Server；
@@ -65,9 +65,9 @@ RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系
   \label{fig:rscp-example1}
 \end{figure}
 
-传统网络中，自治系统的边界路由器收到从eBGP邻居传来的更新路由信息，该边界路由器会将该路由信息经过入站策略后更新到Loc-RIB表，选择最优路由宣告给其iBGP邻居。早期自治系统内的边界路由器建立Full-mesh的iBGP连接，以此来使得外界的路由信息传输到自治系统内部的每台边界路由器。路由经过入站策略后，可能传输到每台边界路由器会有所差异，但大部分前缀在大部分边界路由器上的Loc-RIB表的路由信息都基本相同，入站策略和出站策略主要用于eBGP路由的过滤更新，传统的iBGP策略大多仅配置next-hop-self。根据BGP协议的特性以及网络中路由表的存储实现，本文提出了Loc-RIB增量存储的概念。
+传统网络中，自治系统的边界路由器收到从eBGP邻居传来的更新路由信息，该边界路由器会将该路由信息经过入站策略后更新到Loc-RIB表，选择最优路由宣告给其iBGP邻居。早期自治系统内的边界路由器建立Full-mesh的iBGP连接，以此来使得外界的路由信息传输到自治系统内部的每台边界路由器。路由经过入站策略后，可能传输到每台边界路由器会有所差异，但大部分前缀在大部分边界路由器上的Loc-RIB表的路由信息都基本相同，入站策略和出站策略主要用于eBGP路由的过滤更新，传统的iBGP策略大多仅配置next-hop-self（通过设置next-hop-self将iBGP协议UPDATE报文中传输的next-hop值修改为iBGP邻居的IP地址，从而保证路由的可达性）。根据BGP协议的特性以及网络中路由表的存储实现，本文提出了Loc-RIB增量存储的概念。
 
-综合本文第二章\ref{cha:review}对BGP的路由策略、路由计算的综述，我们会发现对于特定的前缀，在自治系统内的决定每台边界路由器与其他边界路由器最优路由不同的主要原因在2个路由属性Weight和IGPcost：Weight路由属性仅本地路由器有效，不传输给其他的边界路由器；不同边界路由器到其他边界路由器的IGPcost并不相同。仅从路由存储的角度考虑，可以在路由控制平台上的Route-Server中存储一份Public-Loc-RIB，以及在每个iBGP的对等体连接进程中，存储曾配置过Weight值的Prefix的所有路由表项（因为Weight仅在本地路由器有效，并不会影响其他边界路由器的选路，属于边界路由器特有的路由信息，需要单独存储）。Loc-RIB增量存储中增量的含义为，将每台边界路由器特有的路由信息增量存储。为了便于该边界路由器前缀最优路由的计算，将该边界路由器可能受到Weight值影响的前缀的所有路由增量存储。
+综合本文第二章对BGP的路由策略、路由计算的综述，我们会发现对于特定的前缀，在自治系统内的决定每台边界路由器与其他边界路由器最优路由不同的主要原因在2个路由属性Weight和IGPcost：Weight路由属性仅本地路由器有效，不传输给其他的边界路由器；不同边界路由器到其他边界路由器的IGPcost并不相同。仅从路由存储的角度考虑，可以在路由控制平台上的Route-Server中存储一份Public-Loc-RIB，以及在每个iBGP的对等体连接进程中，存储曾配置过Weight值的Prefix的所有路由表项（因为Weight仅在本地路由器有效，并不会影响其他边界路由器的选路，属于边界路由器特有的路由信息，需要单独存储）。Loc-RIB增量存储中增量的含义为，将每台边界路由器特有的路由信息增量存储。为了便于该边界路由器前缀最优路由的计算，将该边界路由器可能受到Weight值影响的前缀的所有路由增量存储。
 
 
 
@@ -78,18 +78,18 @@ RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline
 		network & received-peer & metric & LocPrf & Weight & Path & ebgp-next-hop \\ \hline
-		192.168.1.0 & C1 & 0 & &  &400,i & R3 \\ \hline
-        192.168.1.0 & C1 & 10 & &  &200,400,i & R1 \\ \hline
-        192.168.1.0 & C2 & 5 & &  &300,400,i & R2 \\ \hline
-        192.168.1.0 & C3 & 6 & &  &300,400,i & R2 \\ \hline
-        192.168.2.0 & C1 & 0 & &  &400,i & R3 \\ \hline
-        192.168.2.0 & C1 & 10 & &  &200,400,i & R1 \\ \hline
-        192.168.2.0 & C2 & 5 & &  &300,400,i & R2 \\ \hline
-        192.168.2.0 & C3 & 6 & &  &300,400,i & R2 \\ \hline
+		192.168.1.0 & C1 & 0 & & / &400,i & R3 \\ \hline
+        192.168.1.0 & C1 & 10 & & / &200,400,i & R1 \\ \hline
+        192.168.1.0 & C2 & 5 & & / &300,400,i & R2 \\ \hline
+        192.168.1.0 & C3 & 6 & & / &300,400,i & R2 \\ \hline
+        192.168.2.0 & C1 & 0 & & / &400,i & R3 \\ \hline
+        192.168.2.0 & C1 & 10 & & / &200,400,i & R1 \\ \hline
+        192.168.2.0 & C2 & 5 & &  /&300,400,i & R2 \\ \hline
+        192.168.2.0 & C3 & 6 & & / &300,400,i & R2 \\ \hline
 	\end{tabular}
 \end{table}
 
-在如图\ref{fig:rscp-ibgp}的拓扑中，ASN（Autonomous System Number，自治系统号）为100的自治系统在部署RSCP-iBGP系统的条件下，在Route-Server中Loc-RIB采用增量存储的方案。AS100中有3台Route-Client作为边界路由器，分别命名为C1、C2、C3。Route-Server存储了C1、C2、C3的路由策略，在集中的路由控制平台上部署了C1的入站策略（C1从R1收到的前缀为192.168.1.0/24的路由将其Weight设置为150）。
+在图\ref{fig:rscp-example1}的拓扑中，ASN（Autonomous System Number，自治系统号）为100的自治系统在部署RSCP-iBGP系统的条件下，在Route-Server中Loc-RIB采用增量存储的方案。AS100中有3台Route-Client作为边界路由器，分别命名为C1、C2、C3。Route-Server存储了C1、C2、C3的路由策略，在集中的路由控制平台上部署了C1的入站策略（C1从R1收到的前缀为192.168.1.0/24的路由将其Weight设置为150）。
 
 
 
@@ -127,7 +127,7 @@ RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系
     \item 步骤2：删除集合中本地优先级（Local Preference）不是最高的路由信息，留下本地优先级最高的路由信息。
     \item 步骤3：如果集合中有本地路由器初始的路由（本地初始的路由在BGP表中的下一跳显示为0.0.0.0），则删除其他路由信息。
     \item 步骤4：删除集合中As-path不是最短的路由信息，留下As-path最短的路由信息。
-    \item 步骤5：删除源代码（Origin code）不是最小的路由信息，留下源代码最小的路由信息（IGP<EGP<不完整路由)。
+    \item 步骤5：删除Origin Code不是最小的路由信息，留下源代码最小的路由信息（IGP<EGP<不完整路由)。
     \item 步骤6：删除MED（Multi-Exit Discriminators，多出口鉴别符）不是最低的路径，只有当所有待选路由来自同一AS时（可通过As-path判断），路由器才会对比MED。
 \end{itemize}
 
@@ -141,13 +141,13 @@ RSCP-iBGP逻辑系统如图\ref{fig:rscp-ibgp1}，这个系统运行在自治系
 \end{itemize}
 
 
-自治系统内的边界路由器在iBGP连接中仅将前缀对应的最优路由传输给其iBGP邻居，iBGP邻居收到最优路由后会继续计算最优路由，如果最优路由发生改变则继续传输……，这是自治系统内部的路由收敛过程。当eBGP路由传入自治系统，在全连接的iBGP结构下路径搜索过程计算次数最少N次，最多\verb+N*(N-1)/2+次。而在本文提出的复式路由计算在自治系统内，没有路径搜索和路径收敛的过程，eBGP路由直接从边界路由器传输到路由控制平台Route-Server上，Route-Server有全部的路由信息表，结合图\ref{fig:rscp-ibgp}中的IGP拓扑配置模块（从该模块中获取IGPcost值），由Route-Server为自治系统内的每台边界路由器计算最优路由，计算次数最少1次，最多N次。选择此复式路由模块，当自治系统收到路由更新时，路由计算的总次数至少下降一个数量级。
+自治系统内的边界路由器在iBGP连接中仅将前缀对应的最优路由传输给其iBGP邻居，iBGP邻居收到最优路由后会继续计算最优路由，如果最优路由发生改变则继续传输……，这是自治系统内部的路由收敛过程。当eBGP路由传入自治系统，在全连接的iBGP结构下路径搜索过程计算次数最少N次，最多N\verb+*+(N-1)/2次。而在本文提出的复式路由计算在自治系统内，没有路径搜索和路径收敛的过程，eBGP路由直接从边界路由器传输到路由控制平台Route-Server上，Route-Server有全部的路由信息表，结合图\ref{fig:rscp-ibgp}中的IGP拓扑配置模块（从该模块中获取IGPcost值），由Route-Server为自治系统内的每台边界路由器计算最优路由，计算次数最少1次，最多N次。选择此复式路由模块，当自治系统收到路由更新时，路由计算的总次数至少下降一个数量级。
 
 \subsubsection{路由宣告}
 当集中平台收到iBGP邻居的路由宣告，集中平台上的Route-Server经过Loc-RIB增量存储模块和复式路由计算，得到自治系统内所有边界路由器Route-Client的更新路由，Route-Server将更新路由通过扩展的iBGP协议宣告给自治系统内所有的边界路由器Route-client。
 
 \subsection{边界路由器}
-传统的运行BGP协议的自治系统内的边界路由器，在路由信息的处理过程中，需要使用三种RIB表，分别是Adj-RIBs-In、Loc-RIB、Adj-RIBs-Out表。在RSCP-iBGP的新架构中，Adj-RIBs-In和Adj-RIBs-Out根据配置文件决定是否进行存储在边界路由器上。
+传统的运行BGP协议的自治系统内的边界路由器，在路由信息的处理过程中，需要使用三种RIB表，分别是Adj-RIBs-In、Loc-RIB、Adj-RIBs-Out表。在RSCP-iBGP的新架构中，Adj-RIBs-In和Adj-RIBs-Out根据配置文件决定是否存储在边界路由器上。
 
 \subsubsection{Adj-RIBs-In}
 一般运行BGP协议的路由器默认不存储从邻居获得的所有未经入站策略的路由信息，即默认不存储Adj-RIB-In。如果路由器想要存储从某个BGP邻居收到的所有未经入站策略的路由信息，则需要通过配置文件进行配置，对应的语句为：neighbor [ip-address] soft-reconfiguration inbound，该语句告诉BGP进程保存从指定邻居那里获得的所有更新。
@@ -190,16 +190,16 @@ BGP报文消息\cite{rfc4271}基于TCP协议进行传输，BGP消息主要由BGP
 
 UPDATE消息主要用于BGP对等体之间宣告可达路由或者撤销不可达路由。BGP协议的UPDATE消息主要包含19字节的BGP头以及变长的UPDATE消息数据， 如图\ref{fig:updatemsg}。Path Attributes字段中记录了路由信息的属性，该字段由一个三元组组成<attribute type, attribute length, attribute value>。Attribute Type字段包含两部分Flag和Type Code。 Flag的长度为1个字节，前4位比特位取0或1，分别代表公认属性或可选属性、非传递属性或可传递属性、信息完整或信息不完整、属性长度为1字节或属性长度为2字节。已有的路径属性中的典型Type Code取值从1-7，分别对应路由信息的起源Origin、自治系统路径编号、Next\_hop值、MED属性值、Local Preference值、Atomic\_aggregate、Aggregate。
 
-为了在自治系统间的iBGP连接中传输Weight属性，本文对Path Attributes的Attribute Type进行扩展，以下对传输Weight属性的Path Attribute三元组中设计的元素进行设计：
+为了在自治系统间的iBGP连接中传输Weight属性，本文对Path Attributes的Attribute Type进行扩展，以下对传输Weight属性的Path Attribute三元组中涉及的元素进行设计：
 \begin{itemize}
   \item Flag为01000000，表示Weight属性为公认属性则所有路由器均可识别，Weight属性为可传递属性，在RSCP-iBGP系统中需要从边界路由器传输到集中平台，信息是完整的，且属性长度是1字节；
-  \item 设计传输Weight属性的Attribute Type Code为31（本文提出的RSCP-iBGP系统基于Quagga\cite{quagga}实现，目前Quagga中BGP协议实现的Attribute Type Code没有值为31的Path Attribute）；
+  \item 设置传输Weight属性的Attribute Type Code为31（本文提出的RSCP-iBGP系统基于Quagga\cite{quagga}实现，目前Quagga中BGP协议实现的Attribute Type Code没有值为31的Path Attribute，增设路径属性Type Code值）；
   \item Weight属性值的范围为 0-$(2^{16}-1)$，则传输Weight的Attribute Length值为2，转为16进制为0x02。
 \end{itemize}
 
 \section{对比分析}
 
-为了解决iBGP可扩展问题，学术界提出了分布式路由体系结构下的路由反射和AS联邦，以及集中式路由体系结构下的SoftRouter、RCP、RFCP等5种解决方案。其5种方案虽然很好地解决了iBGP存在的可扩展问题，但存在新的隐患，比如路由反射、AS联邦带来的非最优路由、路由震荡等，也没有充分利用新方案的结构优势，比如SoftRouter、RCP以及RFCP并没有对路由存储和路由计算进行优化等。本文提出的RSCP-iBGP系统不仅解决了iBGP可扩展问题，且解决了现有的分布式路由体系结构方案存在的非最优路由、路由震荡等问题，优化了现有集中式路由体系结构方案没有优化的路由存储和路由计算，具体的理论分析如下。
+为了解决iBGP可扩展问题，学术界提出了分布式路由体系结构下的路由反射和AS联邦，以及集中式路由体系结构下的SoftRouter、RCP、RFCP等5种解决方案。其5种方案虽然很好地解决了iBGP存在的可扩展问题，但存在新的隐患，比如路由反射、AS联邦带来的非最优路由、路由震荡等，也没有充分利用新方案的结构优势，比如SoftRouter、RCP以及RFCP并没有对路由存储和路由计算进行优化等。本文提出的RSCP-iBGP系统不仅解决了iBGP可扩展问题，且解决了现有的分布式路由体系结构方案存在的非最优路由、路由震荡等问题，优化了现有集中式路由体系结构方案没有优化的路由存储和路由计算，具体的对比分析如下。
 
 \begin{figure}
   \centering
@@ -232,14 +232,16 @@ UPDATE消息主要用于BGP对等体之间宣告可达路由或者撤销不可�
   \label{fig:rscp-noloop}
 \end{figure}
 
+
+\paragraph{路由反射引起的非最优路由}
 在图\ref{fig:rscp-best}中，左侧为路由反射自治系统内的网络结构，右侧为RSCP-iBGP新系统下自治系统内的网络结构。Client-A和Client-B分别接收到一条eBGP路由，其来自同一AS，且前缀、Weight、Local Preference、As-path、MED值均相同。在RSCP-iBGP新系统中，Client-A和Client-B会将这两条路由传输到路由控制平台Route-Server；Route-Server通过复式路由计算为自治系统内的3个边界路由器计算最优路由，因为这两条路由来自同一AS，且前缀、Weight、Local Preference、As-path、MED值均相同，则根据IGPcost进行路由选择，Client-A选择自己接收到eBGP路由作为该前缀的最优路由，Client-B选择自己接收到eBGP路由作为该前缀的最优路由，Client-C选择Client-B作为自己的最优出口，即Client-C选择client-B从eBGP邻居收到的路由作为自己的最优路由。
 
 RSCP-iBGP新系统解决了路由反射中的非最优路由问题，因为RSCP-iBGP新系统上所有边界路由器的最优路由计算都是基于全部的路由信息，所以计算结果均是理论上的最优路由。\\
 
 
+\paragraph{路由反射引起的转发环路}
 
-
-章节\ref{subsubsec:rr}中路由反射转发环路发生的原因是路由反射结构设置不合理,数据包在转发的过程中多次被重新路由。在RSCP-iBGP新系统中，如图\ref{fig:rscp-noloop}，Client-C(对应路由反射器RR-A)和Client-D（对应路由反射器RR-B）会将其收到的路由信息传输给路由控制平台上的Route-Server，Client-C收到的路由记为Prefix1-route1， Client-D收到的路由标记为Prefix1-route2，Route-Server会经过复式路由计算模块计算出自治系统内的四台边界路由器的最优路由，Client-B的最优出口是Client-C，Client-A的最优出口是Client-D。当Client-B要发送目的地址为Prefix1的数据包时，直接通过Client-C转发出去，不会发生路由环路。\\
+章节\ref{subsubsec:rr}中路由反射转发环路发生的原因是路由反射结构设置不合理,数据包在转发的过程中多次被重新路由。在RSCP-iBGP新系统中，如图\ref{fig:rscp-noloop}，Client-C(对应路由反射器RR-A)和Client-D（对应路由反射器RR-B）会将其收到的路由信息传输给路由控制平台上的Route-Server，Client-C收到的路由记为Prefix1-route1， Client-D收到的路由标记为Prefix1-route2，Route-Server会经过复式路由计算模块计算出自治系统内的四台边界路由器的最优路由，Client-B的最优出口是Client-C，Client-A的最优出口是Client-D。当Client-B要发送目的地址为Prefix1的数据包时，直接通过Client-C转发出去，不会发生转发环路。\\
 
 \begin{figure}
   \centering
@@ -250,6 +252,7 @@ RSCP-iBGP新系统解决了路由反射中的非最优路由问题，因为RSCP-
 \end{figure}
 
 
+\paragraph{路由反射引起的MED震荡}
 
 路由反射引起的MED震荡主要是因为某些时候MED值不可比较，导致最优路由的结果变化，从而发生路由震荡。在图\ref{fig:rscp-nomed}中，左侧为章节\ref{subsubsec:rr}中路由反射结构中因为MED值发生路由震荡的网络结构，右侧为左侧对应的RSCP-iBGP新系统下自治系统内的网络结构。在RSCP-iBGP的新系统中，Client-A1、Client-A2、Client-B收到的3条路由均会传输到路由控制平台的Route-Server。因为传输到自治系统内的3条路由，前缀、Weight、Local Preference、As-path长度均相同。Route-Server的复式路由计算模块，采用集合缩小法，对于域内的所有边界路由器，Client-B收到的eBGP路由优于Client-A2收到的eBGP路由，所以自治系统内的其他路由器的最优路由，根据IGPcost，在client-A1收到的eBGP路由和Client-B收到的eBGP路由，这两条路由之间选择。在RSCP-iBGP新系统中，路由计算采用集合缩小法，基于全部的路由进行路由计算，并不会因为MED值产生路由信息震荡。\\
 
@@ -262,6 +265,7 @@ RSCP-iBGP新系统解决了路由反射中的非最优路由问题，因为RSCP-
   \label{fig:rscp-notopo}
 \end{figure}
 
+\paragraph{路由反射引起的拓扑震荡}
 
 路由反射引起的拓扑震荡主要是因为路由反射结构设计不合理,路由决策主要依赖IGPcost值，一旦接收到其他路由反射器的最优路由，自己本身的最优路由会发生改变，将本身的最优路由宣告出去之后，会引起其他路由反射器最优路由的变化，最终导致路由震荡产生。在图\ref{fig:rscp-notopo}中，左侧为章节\ref{subsubsec:rr}中路由反射结构中因为路由反射结构设计不合理发生路由震荡的网络结构，右侧为左侧对应的RSCP-iBGP新系统下自治系统内的网络结构。在RSCP-iBGP的新系统中，Client-A、Client-B、Client-C收到的3条路由均会传输到路由控制平台的Route-Server。因为传输到自治系统内的3条路由，前缀、Weight、Local Preference、As-path长度、MED均相同，则在Route-Server的复式路由计算模块中，主要依据IGPcost计算自治系统内的所有边界路由器的最优路由，Client-A1的最优出口是Client-B，Client-B1的最优出口是Client-C，Client-C1的最优出口是Client-A。在RSCP-iBGP新系统中，基于全部路由进行路由计算，解决了路由反射因为路由反射器仅反射最优路由的特性以及Cluster结构、路由反射拓扑设计等导致的路由震荡。
 
@@ -278,6 +282,7 @@ RSCP-iBGP新系统解决了路由反射中的非最优路由问题，因为RSCP-
 
 AS联邦解决了iBGP可扩展问题，但在特定情况下也会产生路由计算非最优路由、路由震荡等问题。本文提出的RSCP-iBGP新系统，路由计算基于全部的路由信息，同时为全部边界路由器计算最优路由，没有路由收敛的过程，不会出现AS联邦存在的隐患。\\
 
+\paragraph{AS联邦引起的非最优路由}
 AS联邦导致的非最优路由主要原因，在于自治系统内部的子自治系统之间仅传输最优路由，这直接导致某些子自治系统并没有全部的路由信息。在图\ref{fig:rscp-asbest}中，左侧为章节\ref{subsubsec:rr}中AS联邦结构中产生非最优路由情况的网络拓扑，右侧为左侧对应的RSCP-iBGP新系统下自治系统内的网络结构。在RSCP-iBGP的新系统中，Ra-2、Ra-3、Rb-2收到的3条由自治系统400向外宣告的192.168.1.0/24的路由信息，这3条路由信息均会传输到路由控制平台的Route-Server。因为传输到自治系统内的3条路由，前缀、Weight、Local Preference、As-path长度、MED均相同，则在Route-Server的复式路由计算模块中，主要依据IGPcost计算自治系统内的所有边界路由器的最优路由，Ra-1的最优出口是Ra-3，Rb-1的最优出口是Ra-2。在RSCP-iBGP新系统中，基于全部路由进行路由计算，解决了AS联邦的非最优路由问题。\\
 
 
@@ -291,6 +296,7 @@ AS联邦导致的非最优路由主要原因，在于自治系统内部的子自
   \label{fig:rscp-asnomed}
 \end{figure}
 
+\paragraph{AS联邦引起的路由震荡}
 
 AS联邦导致的路由震荡主要原因，在于自治系统内部的子自治系统之间仅传输最优路由，且最优路由两两比较中MED不可比，这直接导致某些子自治系统向外宣告的最优路由会随着接收到的新的路由信息产生变化，最后在路由收敛的过程中产生路由震荡。在图\ref{fig:rscp-asnomed}中，左侧为章节\ref{subsubsec:rr}中AS联邦结构中产生路由震荡的网络拓扑，右侧为左侧对应的RSCP-iBGP新系统下自治系统内的网络结构。在RSCP-iBGP的新系统中，Ra-2、Ra-3、Rb-2收到的3条由自治系统400向外宣告的192.168.1.0/24的路由信息，这3条路由信息均会传输到路由控制平台的Route-Server。因为传输到自治系统内的3条路由，前缀、Weight、Local Preference、As-path长度均相同，则在Route-Server的复式路由计算模块中，主要依据MED、IGPcost等计算自治系统内的所有边界路由器的最优路由。Route-Server的复式路由计算模块，采用集合缩小法，对于域内的所有边界路由器，Rb-2收到的eBGP路由优于Ra-3收到的eBGP路由，所以自治系统内的其他路由器的最优路由，主要根据IGPcost，在Ra-2收到的eBGP路由和Rb-2收到的eBGP路由，这两条路由之间选择。Ra-1的最优出口是Ra-2，Rb-1的最优出口是Ra-2，Ra-3的最优出口是Ra-2。在RSCP-iBGP新系统中，基于全部路由进行路由计算，且没有路由收敛的过程，解决了AS联邦的路由震荡问题。
 
@@ -330,7 +336,7 @@ RFCP是集中式收集路由信息，通过构建虚拟的拓扑环境模拟真�
 
 \subsection{总结}
 
-本章节主要论证本文提出的RSCP-iBGP新系统，相比于现有的学术界提出的2种分布式路由体系结构下的方案、3种集中式路由体系结构下的方案具有的优势，以及该方案的设计目标和价值意义。概括性的比较如图\ref{tab:compare}所示。
+本章节主要论证本文提出的RSCP-iBGP新系统，相比于现有的学术界提出的2种分布式路由体系结构下的方案、3种集中式路由体系结构下的方案具有的优势，以及该方案的设计目标和价值意义。基于上述RSCP-iBGP系统与分布式路由体系结构和集中式路由体系结构的对比分析，可得到RSCP-iBGP系统与5种已有研究的概括性比较，如图\ref{tab:compare}所示。
 
 
 

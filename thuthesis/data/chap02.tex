@@ -55,7 +55,7 @@ BGP路由计算\cite{DianeTeare2016CCNP}的过程是为了实现前缀对应的�
     \item 步骤2：优选本地优先级（Local Preference）最高的路由，自治系统内有效。
     \item 步骤3：优选本地路由器初始的路由（本地初始的路由在BGP表中的下一跳显示为0.0.0.0）。
     \item 步骤4：优选As-path最短的路由。
-    \item 步骤5：优选源代码（Origin code）最小的路由（IGP<EGP<不完整路由)。
+    \item 步骤5：优选Origin Code最小的路由（IGP<EGP<不完整路由)。
     \item 步骤6：优选MED（Multi-Exit Discriminators，多出口鉴别符）最低的路径，只有当所有待选路由来自同一AS时，路由器才会对比MED。网络管理员也可以通过设置路由器配置命令bgp always-compare-med，使得MED值总是可比。
     \item 步骤7：优选外部eBGP路由，而不是内部iBGP路由。
     \item 步骤8：优选去往BGP下一跳最短的路径，即IGPcost最小的路由。
@@ -100,21 +100,22 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 
 
-路由反射因为缺少全部路由和结构设计等问题，在特定条件下会产生非最优出口、转发环路、路由震荡等问题。\\
+路由反射因为缺少全部路由和结构设计等问题，在特定条件下会产生非最优出口、转发环路、路由震荡等问题。
 
 
-路由反射导致的非最优出口问题根本原因是，路由反射器没有宣告给Client的路由可能是Client的最优路由，如图\ref{fig:rr-nobest}，假设RR收到2条前缀Prefix1的路由信息，分别来自ClientA和ClientB,这两条eBGP路由来自同一AS，且前缀、Weight、Local Preference、As-path、MED值均相同。RR经过路由计算后通过比较IGPcost发选择Client-A为Prefix1的最优出口，RR会将Prefix1的最优出口为Client-A这条消息宣告给Client-B和Client-C，Client-C会认为Prefix1的最优出口为Client-A，实际上对于Client-C而言，Client-B为Prefix1的最优出口。\\
+\paragraph{路由反射引起的非最优出口}
+路由反射导致的非最优出口问题根本原因是，路由反射器没有宣告给Client的路由可能是Client的最优路由，如图\ref{fig:rr-nobest}，假设RR收到2条前缀Prefix1的路由信息，分别来自ClientA和ClientB,这两条eBGP路由来自同一AS，且前缀、Weight、Local Preference、As-path、MED值均相同。RR经过路由计算后通过比较IGPcost发选择Client-A为Prefix1的最优出口，RR会将Prefix1的最优出口为Client-A这条消息宣告给Client-B和Client-C，Client-C会认为Prefix1的最优出口为Client-A，实际上对于Client-C而言，Client-B为Prefix1的最优出口。
 
 \begin{figure}
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=0.8\textwidth]{rr-forwardloop}
-  \caption{路由反射引起的转发环路举例}
+  \caption{路由反射引起的转发环路举例\cite{Dube1999A}}
   \label{fig:rr-forwardloop}
 \end{figure}
 
 
-
+\paragraph{路由反射引起的转发环路}
 路由反射导致的转发环路\cite{Dube1999A}根本原因是，路由反射结构设计不合理，物理链路和逻辑链路不一致，边界路由器最优出口的IGP路径经过了其他的边界路由器，该数据包被重新路由，如图\ref{fig:rr-forwardloop}，形成转发环路的过程：
 
 \begin{itemize}
@@ -123,7 +124,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 \item 步骤3：RR-A将最优路由Prefix-route1宣告给Client-A，Client-A认为Prefix1的最优出口是RR-A。RR-B将最优路由Prefix-route2宣告给Client-B，Client-B认为Prefix1的最优出口是RR-B；
 \item 步骤3：Client-B收到目的地址为Prefix1的数据包，判断该数据包的最优出口为RR-B，根据IGP链路要到达RR-B必须经过Client-A，所以Client-B将目的地址为Prefix1的数据包转发给Client-A；
 \item 步骤4：Client-A收到目的地址为Prefix1的数据包，判断该数据包的最优出口为RR-A，根据IGP链路要到达RR-A必须经过Client-B。所以Client-A将目的地址为Prefix1的数据包转发给Client-B；
-\item 步骤5：Client-B又转发给Client-A（步骤3），Client-A转发给Client-B（步骤4），形成了转发环路（步骤3和步骤4不断重复）。\\
+\item 步骤5：Client-B又转发给Client-A（步骤3），Client-A转发给Client-B（步骤4），形成了转发环路（步骤3和步骤4不断重复）。
 \end{itemize}
 
 
@@ -139,6 +140,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
   \label{fig:rr-med}
 \end{figure}
 
+\paragraph{路由反射引起的MED震荡}
 
 路由反射因为MED震荡，根本原因在于路由计算的过程中某些度量值（MED）不可比，如图\ref{fig:rr-med},因为不同时刻路由反射器针对同一Prefix产生的最优路由不同，导致其他路由反射器在不同时候收到的同一Prefix的路由集不同以至于该Prefix的最优路由不同，形成的MED震荡过程如下：
 
@@ -149,7 +151,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 \item 步骤2：RR-A将Prefix1的最优路由宣告给RR-B，RR-B收到来自Client-A2和Client-B的路由，因为Client-A2和Client-B收到的路由来自于同一个自治系统，所以MED值可以比较，最终RR-B选择来自MED值更小的Client-B过来的路由；
 \item 步骤3：RR-B将Prefix1的最优路由宣告给RR-A，RR-A收到来自Client-B、Client-A2、Client-A1的总共3条路由，因为路由计算是把由近及远的路由两两比较，那么RR-A进行路由计算的时候先因为MED值可比淘汰掉来自Client-A2的路由，然后将Client-B和client-A2进行比较，因为MED值不可比取IGPcost更小的路由，则RR-A选择来自Client-A1的路由为Prefix1的最优路由；
 \item 步骤4：RR-A将Prefix1的最优路由宣告给RR-B，则RR-B收到来自Client-A1和Client-B的路由，因为MED不可比取IGPcost更小的路由，则RR-B选择来自Client-A1的路由为Prefix1的最优路由；
-\item 步骤5：RR-B将Prefix1的最优路由，宣告给RR-A，则RR-A处只有来自Client-A1和Client-A2的两条路由了，回到步骤1，发生路由震荡...\\
+\item 步骤5：RR-B将Prefix1的最优路由，宣告给RR-A，则RR-A处只有来自Client-A1和Client-A2的两条路由了，回到步骤1，发生路由震荡。
 \end{itemize}
 
 
@@ -161,7 +163,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
   \label{fig:rr-topo}
 \end{figure}
 
-
+\paragraph{路由反射引起的拓扑震荡}
 
 路由反射导致的拓扑震荡，根本原因是RR结构设计不合理，cluster内部的RR和client之间的IGPcost远大于RR和其他cluster内的client的IGPcost，路由决策主要依赖IGPcost值，如图\ref{fig:rr-topo}，产生路由震荡的过程如下：
 
@@ -198,7 +200,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=\textwidth]{ascon-nobest}
-  \caption{AS联邦引起的非最优出口举例}
+  \caption{AS联邦引起的非最优出口举例\cite{rfc5065}}
   \label{fig:ascon-nobest}
 \end{figure}
 
@@ -217,7 +219,7 @@ iBGP协议必须保持全连接，防止在AS内部形成BGP路由环路，同�
 
 AS联邦因为部分边界路由器在进行最优路由计算的时候，存在缺少全部路由和MED度量值不可比等问题，在特定条件下会产生最优路由计算结果非最优出口、路由震荡等问题。\\
 
-
+\paragraph{AS联邦引起的非最优出口}
 
 AS联邦导致的非最优出口\cite{rfc5065}，根本原因在于自治系统内部的子自治系统之间传输的是最优路由，那么子自治系统可能得不到全部的路由，该种情况下路由计算的结果则不一定是最优出口，如图\ref{fig:ascon-nobest}，具体流程见下：
 
@@ -225,7 +227,7 @@ AS联邦导致的非最优出口\cite{rfc5065}，根本原因在于自治系统�
 
 \begin{itemize}
 \item 步骤1：Ra-1收到来自Ra-2和Ra-3的路由Prefix1(前缀为192.168.1.0/24的路由信息),，Ra根据IGPcost最小原则选择来自Ra-3的路由作为Prefix1的最优路由,并宣告给Rb-1;
-\item 步骤2：Rb-1收到Ra-1宣告的来自Ra-3的路由，Rb-1边界路由器有来自Ra-3和Rb-2的2条路由，根据IGPcost值最小Rb-1认为Prefix1的最优路由为来自Ra-3的路由。（实际对于Prefix1，Rb-1的最优出口是Ra-2，而不是Ra-3）\\
+\item 步骤2：Rb-1收到Ra-1宣告的来自Ra-3的路由，Rb-1边界路由器有来自Ra-3和Rb-2的2条路由，根据IGPcost值最小Rb-1认为Prefix1的最优路由为来自Ra-3的路由。（实际对于Prefix1，Rb-1的最优出口是Ra-2，而不是Ra-3）
 \end{itemize}
 
 
@@ -233,10 +235,11 @@ AS联邦导致的非最优出口\cite{rfc5065}，根本原因在于自治系统�
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=\textwidth]{ascon-med}
-  \caption{AS联邦引起的MED震荡举例}
+  \caption{AS联邦引起的MED震荡举例\cite{rfc3345}}
   \label{fig:ascon-med}
 \end{figure}
 
+\paragraph{AS联邦引起的MED路由震荡}
 AS联邦导致的MED路由震荡\cite{rfc3345}，根本原因在于路由计算的过程中没有基于全部的路由信息以及某些度量值（MED）不可比，如图\ref{fig:ascon-med},因为不同时刻子自治系统针对同一Prefix向外宣告的最优路由不同，导致其他子自治系统在不同时候收到的同一Prefix的路由集不同以至于计算出来的该Prefix的最优路由不同，形成的MED震荡过程如下：
 
 
@@ -275,15 +278,15 @@ Softrouter也存在一定的局限性，列举其中主要的三点局限性：
 \subsubsection{RCP\cite{Feamster2004The}}
 RCP（Route Control Platform，路由控制平台）的基本思想是在自治系统内部建立一个集中控制平台，通过与自治系统内的边界路由器建立iBGP连接来接收从eBGP连接传输过来的路由，在集中控制平台上实现路由的集中式存储、策略管理和路由计算，最终得到自治系统内每台边界路由器的最优路由，通过iBGP新协议将最优路由传输给自治系统内的每台边界路由器，由边界路由器进行eBGP宣告。如果eBGP邻居的自治系统也部署了RCP平台，那么RCP平台之间可以直接建立Inter-AS协议连接进行通信，大概框架如图\ref{fig:rcp}。
 
-基于RCP的思想，有学者提出了RCP的具体实现方案\cite{Caldwell2005Design}，即在集中控制平台上运行三个模块，分别为BGP Engine，IGP Viewer和Route Control Server，BGP Engine负责和自治系统内的边界路由器通信，IGP Viewer负责即时收集域内拓扑信息，将对应的IGPcost矩阵传给Control Server，Control Server负责路由表的集中存储、路由策略的管理以及最优路由的计算等控制平面的功能。
+基于RCP的思想，研究RCP的相关学者继而提出了RCP的具体实现方案\cite{Caldwell2005Design}，即在集中控制平台上运行三个模块，分别为BGP Engine，IGP Viewer和Route Control Server，BGP Engine负责和自治系统内的边界路由器通信，IGP Viewer负责即时收集域内拓扑信息，将对应的IGPcost矩阵传给Control Server，Control Server负责路由表的集中存储、路由策略的管理以及最优路由的计算等控制平面的功能。
 
-RCP集中式控制平台可以进行集中式的路由存储，路由器上不需要存储路由表，极大地减少了路由器的负载。RCP集中式控制平台能够更好地进行策略管理，网络操作员在集中平台上部署路由策略，而不是专门去修改每台物理路由器上的路由配置文件。RCP集中式控制平台拥有集中的计算资源、整个自治系统内的IGP拓扑和传入自治系统的全部路由，能够更好地更准确地进行路由计算。
+RCP集中式控制平台可以进行集中式的路由存储，路由器上不需要存储路由表，极大地减少了路由器的负载。RCP集中式控制平台能够更好地进行策略管理，网络操作员在集中平台上部署路由策略，而不是专门去修改每台物理路由器上的路由配置文件\cite{journals/network/CaesarR05}。RCP集中式控制平台拥有集中的计算资源、整个自治系统内的IGP拓扑和传入自治系统的全部路由，能够更好地更准确地进行路由计算。
 
 除了以上的优势，RCP也存在一些缺点\cite{Feamster2004The}：
 \begin{itemize}
     \item 因为RCP平台本身既支持可能有上百条的iBGP连接，也支持可能上千条的eBGP连接，所以虽然解决了iBGP的可扩展问题，但是平台本身的可扩展性较差，集中平台需要针对每一条更新的路由，为域内的每一台边界路由器计算出该前缀对应的最优路由，可能集中平台的计算能力会受到很大的挑战；
     \item 集中平台都存在鲁棒性较差的特点，一旦集中控制平台的掌控控制单元的核心物理机器出现问题，整个自治系统的网络面临瘫痪的危险；
-    \item RCP在策略集中配置的过程中，未考虑对集中的策略配置进行检测，预防策略冲突、覆盖等问题；
+    \item RCP在策略集中配置的过程中，并没有对策略配置进行扩展从而支持更灵活的路由策略\cite{journals/jsac/WangAR09}，也未考虑对集中的策略配置进行检测，预防策略冲突、覆盖等问题；
     \item RCP的路由计算仍属于传统的分布式路由计算，当收到一条更新路由时，需要计算N次得到N台路由器的最优出口路由。
 \end{itemize}
 
@@ -350,4 +353,4 @@ SDX相当于将IXP平台作为一个集中平台，为了更好地部署路由�
 
 \section{本章小结}
 
-本文在介绍BGP协议及其工作流程之后，总结归纳了iBGP协议存在的问题。随着现在网络规模的不断扩大，网络需求的不断增加，iBGP协议面临很多挑战，而可扩展性差是iBGP的主要问题。之后本文对现有解决iBGP可扩展问题的相关研究进行了综述，对学术界提出的RR、AS联邦、SoftRouter、RCP、RFCP等5种方案进行了详细的介绍和优缺点分析。RR和AS联邦虽然解决了iBGP可扩展问题，但带来了非最优路由、转发环路、路由震荡等新问题；SoftRouter、RCP、RFCP采用集中式路由的思路，解决了iBGP存在的可扩展问题，但均仅对路由存储、计算、策略管理的某些方面进行局部优化。集中式路由体系结构是解决路由问题的一个非常好的思路，对此本章最后对集中式思路优化BGP的相关研究也进行了综述。结合前人的工作情况，本文想要基于集中式的路由体系结构，提出基于集中平台的iBGP扩展协议的设计方案，解决其可扩展性问题的同时，优化路由存储、策略以及路由计算。
+本文在介绍BGP协议及其工作流程之后，总结归纳了iBGP协议存在的问题。随着现在网络规模的不断扩大，网络需求的不断增加，iBGP协议面临很多挑战，而可扩展性差是iBGP的主要问题。之后本文对现有解决iBGP可扩展问题的相关研究进行了综述，对学术界提出的RR、AS联邦、SoftRouter、RCP、RFCP等5种方案进行了详细的介绍和优缺点分析。RR和AS联邦虽然解决了iBGP可扩展问题，但带来了非最优路由、转发环路、路由震荡等新问题；SoftRouter、RCP、RFCP采用集中式路由的思路，解决了iBGP存在的可扩展问题，但均仅对路由存储、计算、策略管理的某些方面进行局部优化。集中式路由体系结构是解决路由问题的一个非常好的思路，对此本章最后对集中式思路优化BGP的相关研究也进行了综述。结合前人的工作情况，本文基于集中式的路由体系结构，提出基于集中平台的iBGP扩展协议的设计方案，解决其可扩展性问题的同时，优化路由存储、策略以及路由计算。

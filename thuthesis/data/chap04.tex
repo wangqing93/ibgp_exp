@@ -78,7 +78,7 @@ Quagga的bgpd进程中路由算法主要是在bgp\_best\_selection函数中实�
 \section{系统设计与实现}
 
 
-本文提出的自治系统内的RSCP-iBGP系统的设计与实现主要涉及三大部分：自治系统内的边界路由器Route-Client路由器的设计与实现、自制系统内路由集中控制平台上Route-Server路由器的设计与实现、以及边界路由器Route-Client和路由集中控制平台Route-Server之间通信协议的设计与实现。
+本文提出的自治系统内的RSCP-iBGP系统的设计与实现主要涉及三大部分：自治系统内的边界路由器Route-Client路由器的设计与实现、自治系统内路由集中控制平台上Route-Server路由器的设计与实现、以及边界路由器Route-Client和路由集中控制平台Route-Server之间通信协议的设计与实现。
 
 
 \subsection{边界路由器}
@@ -116,6 +116,10 @@ Quagga的bgpd进程中路由算法主要是在bgp\_best\_selection函数中实�
     \caption{BGP\_INCREMENT\_STORAGE($Peer, Prefix, Attr$)}%算法标题
     \label{alg:incre_storage}
     \begin{algorithmic}[1]%一行一个标行号
+        \REQUIRE
+        $Peer, Prefix, Attr$
+        \ENSURE
+        $public\_rib, private\_ribs$
         \STATE $need\_add\_public\_rib \gets 1$
         \STATE $bgp\_info \gets make\_info(Peer, attr)$
         \IF{$(Prefix \in public\_rib) and (bgp\_info \in public\_rib[Prefix])$}
