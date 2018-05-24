@@ -20,56 +20,80 @@
 
 在本文提出的RSCP-iBGP系统中，自治系统内的Loc-RIB路由信息均存储在集中平台的Route-Server路由器上，路由存储集中优化是否实现正确，通过运行图\ref{fig:rscp-example1}中的拓扑进行检测验证，与之对应的自治系统内全连接的拓扑结构如图\ref{fig:rscp-example-fm}。
 
-使用虚拟机搭建图\ref{fig:rscp-example-fm}的网络拓扑，安装了CentOS系统的虚拟机运行软件路由器Quagga来模拟真实的路由器。在图\ref{fig:rscp-example-fm}中自治系统号为100的自治系统内部的边界路由器之间通过iBGP协议两两连接。分别在R1、R2、C1上使用Route-map过滤更新策略，来配置BGP策略，使得从R1宣告给C1的路由MED值=10，从R2宣告给C2的路由MED=5，从R2宣告给C3的路由MED=6，从R1收到的Prefix192.168.1.0/24的路由信息经过C1的入站策略后该路由的Weight值改为150，通过iBGP协议传输的iBGP路由信息Local Preference默认为100（路由比较过程中如果LocPrf值未设置，默认为100）。则当R3向外宣告192.168.1.0/24和192.168.2.0/24时，自治系统号为100的自治系统内的边界路由器的Loc-RIB表格分别为表\ref{tab:cl-fm}、表\ref{tab:c2-fm}、表\ref{tab:c3-fm}：
+使用虚拟机搭建图\ref{fig:rscp-example-fm}的网络拓扑，安装了Linux系统的虚拟机运行软件路由器Quagga来模拟真实的路由器。在图\ref{fig:rscp-example-fm}中自治系统号为100的自治系统内部的边界路由器之间通过iBGP协议两两连接。分别在R1、R2、C1上使用Route-map过滤更新策略，来配置BGP策略，使得从R1宣告给C1的路由MED值=10，从R2宣告给C2的路由MED=5，从R2宣告给C3的路由MED=6，从R1收到的Prefix192.168.1.0/24的路由信息经过C1的入站策略后该路由的Weight值改为150，通过iBGP协议传输的iBGP路由信息Local Preference默认为100（路由比较过程中如果LocPrf值未设置，默认为100）。则当R3向外宣告192.168.1.0/24和192.168.2.0/24时，自治系统号为100的自治系统内的边界路由器的Loc-RIB表格分别为表\ref{fig:c1-table}、表\ref{fig:c2-table}、表\ref{fig:c3-table}：
 
-\begin{table}[]
-\centering
-\caption{自治系统内全连接拓扑下C1的Loc-RIB表项}
-\label{tab:cl-fm}
-\begin{tabular}{|c|c|c|c|c|c|c|}
-\hline
-Network     & \begin{tabular}[c]{@{}c@{}}Origin\\ code\end{tabular} & Next Hop          & Metirc & LocPrf & Weight & Aspaths   \\ \hline
-192.168.1.0 & i                                                   & 192.168.5.140-C2  & 5      & 100    & 0      & 300 400 i \\ \hline
-            &                                                    & 192.168.9.135-R1 & 10      &        & 150      & 200 400 i \\ \hline
-            &                                                      & 192.168.11.132-R3  & 0     &     & 0      & 400 i \\ \hline
-192.168.2.0 &                                                      & 192.168.9.135-R1 & 10      &        & 0      & 200 400 i \\ \hline
-            &                                                     & 192.168.11.132-C3  & 0      &     & 0      & 400 i     \\ \hline
-\end{tabular}
-\end{table}
+%\begin{table}[]
+%\centering
+%\caption{自治系统内全连接拓扑下C1的Loc-RIB表项}
+%\label{tab:cl-fm}
+%\begin{tabular}{|c|c|c|c|c|c|c|}
+%\hline
+%Network     & \begin{tabular}[c]{@{}c@{}}Origin\\ code\end{tabular} & Next Hop          & Metirc & LocPrf & Weight & Aspaths   \\ \hline
+%192.168.1.0 & i                                                   & 192.168.5.140-C2  & 5      & 100    & 0      & 300 400 i \\ \hline
+%            &                                                    & 192.168.9.135-R1 & 10      &        & 150      & 200 400 i \\ \hline
+%            &                                                      & 192.168.11.132-R3  & 0     &     & 0      & 400 i \\ \hline
+%192.168.2.0 &                                                      & 192.168.9.135-R1 & 10      &        & 0      & 200 400 i \\ \hline
+%            &                                                     & 192.168.11.132-C3  & 0      &     & 0      & 400 i     \\ \hline
+%\end{tabular}
+%\end{table}
 
-
-\begin{table}[]
-\centering
-\caption{自治系统内全连接拓扑下C2的Loc-RIB表项}
-\label{tab:c2-fm}
-\begin{tabular}{|c|c|c|c|c|c|c|}
-\hline
-Network     & \begin{tabular}[c]{@{}c@{}}Origin\\ code\end{tabular} & Next Hop          & Metirc & LocPrf & Weight & Aspaths   \\ \hline
-192.168.1.0 &                                                       & 192.168.13.133-R2  & 5      &        & 0      & 300 400 i \\ \hline
-            & i                                                     & 192.168.5.139-C1 & 10     & 100    & 0      & 200 400 i \\ \hline
-192.168.2.0 &                                                       & 192.168.13.133-R2 & 5      &        & 0      & 300 400 i \\ \hline
-            & i                                                     & 192.168.5.139-C1  & 0      & 100    & 0      & 400 i     \\ \hline
-\end{tabular}
-\end{table}
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=0.8\textwidth]{c1-table}
+  \caption{自治系统内全连接拓扑下C1的Loc-RIB表项}
+  \label{fig:c1-table}
+\end{figure}
 
 
-\begin{table}[]
-\centering
-\caption{自治系统内全连接拓扑下C3的Loc-RIB表项}
-\label{tab:c3-fm}
-\begin{tabular}{|c|c|c|c|c|c|c|}
-\hline
-Network     & \begin{tabular}[c]{@{}c@{}}Origin\\ code\end{tabular} & Next Hop          & Metirc & LocPrf & Weight & Aspaths   \\ \hline
-192.168.1.0 & i                                                     & 192.168.7.175-C2  & 5      & 100    & 0      & 300 400 i \\ \hline
-            &                                                       & 192.168.14.131-R2 & 6      &        & 0      & 300 400 i \\ \hline
-            & i                                                     & 192.168.8.141-C1  & 10     & 100    & 0      & 200 400 i \\ \hline
-192.168.2.0 &                                                       & 192.168.14.131-R2 & 6      &        & 0      & 300 400 i \\ \hline
-            & i                                                     & 192.168.8.141-C1  & 0      & 100    & 0      & 400 i     \\ \hline
-\end{tabular}
-\end{table}
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=0.8\textwidth]{c2-table}
+  \caption{自治系统内全连接拓扑下C2的Loc-RIB表项}
+  \label{fig:c2-table}
+\end{figure}
+
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=0.8\textwidth]{c1-table}
+  \caption{自治系统内全连接拓扑下C3的Loc-RIB表项}
+  \label{fig:c3-table}
+\end{figure}
+
+%\begin{table}[]
+%\centering
+%\caption{自治系统内全连接拓扑下C2的Loc-RIB表项}
+%\label{tab:c2-fm}
+%\begin{tabular}{|c|c|c|c|c|c|c|}
+%\hline
+%Network     & \begin{tabular}[c]{@{}c@{}}Origin\\ code\end{tabular} & Next Hop          & Metirc & LocPrf & Weight & Aspaths   \\ \hline
+%192.168.1.0 &                                                       & 192.168.13.133-R2  & 5      &        & 0      & 300 400 i \\ \hline
+%            & i                                                     & 192.168.5.139-C1 & 10     & 100    & 0      & 200 400 i \\ \hline
+%192.168.2.0 &                                                       & 192.168.13.133-R2 & 5      &        & 0      & 300 400 i \\ \hline
+%            & i                                                     & 192.168.5.139-C1  & 0      & 100    & 0      & 400 i     \\ \hline
+%\end{tabular}
+%\end{table}
 
 
-使用虚拟机搭建图\ref{fig:rscp-example1}的网络拓扑，自治系统号为100的自治系统外的边界路由器通过安装了CentOS系统的虚拟机运行软件路由器Quagga来，自治系统号为100的自治系统内部部署RSCP-iBGP系统，自治系统号为100的自治系统内的边界路由器通过安装了CentOS系统的虚拟机运行修改后的软件路由器Quagga-Route-Client来模拟，自治系统号为100的自治系统内的Route-Server路由器通过安装了CentOS系统的虚拟机运行修改后的软件路由器Quagga-Route-Server来模拟。仍需要在R1、R2、C1上使用Route-map过滤更新策略，来配置BGP策略，使得从R1宣告给C1的路由MED值=10，从R2宣告给C2的路由MED=5，从R2宣告给C3的路由MED=6，从R1收到的Prefix192.168.1.0/24的路由信息经过C1的入站策略后该路由的Weight值改为150，通过iBGP协议传输的iBGP路由信息Local Preference默认为100。则当R3向外宣告192.168.1.0/24和192.168.2.0/24时，自治系统号为100的自治系统内Route-Server路由器上存储的Public-Loc-RIB见表\ref{tab:pub}。 因为192.168.1.0/24和192.168.2.0/24前缀的最优路由与Weight相关的仅有C1边界路由器，则Route-Server仅存储了针对C1的Private-Loc-RIB，见表\ref{tab:pri}。
+%\begin{table}[]
+%\centering
+%\caption{自治系统内全连接拓扑下C3的Loc-RIB表项}
+%\label{tab:c3-fm}
+%\begin{tabular}{|c|c|c|c|c|c|c|}
+%\hline
+%Network     & \begin{tabular}[c]{@{}c@{}}Origin\\ code\end{tabular} & Next Hop          & Metirc & LocPrf & Weight & Aspaths   \\ \hline
+%192.168.1.0 & i                                                     & 192.168.7.175-C2  & 5      & 100    & 0      & 300 400 i \\ \hline
+%            &                                                       & 192.168.14.131-R2 & 6      &        & 0      & 300 400 i \\ \hline
+%            & i                                                     & 192.168.8.141-C1  & 10     & 100    & 0      & 200 400 i \\ \hline
+%192.168.2.0 &                                                       & 192.168.14.131-R2 & 6      &        & 0      & 300 400 i \\ \hline
+%            & i                                                     & 192.168.8.141-C1  & 0      & 100    & 0      & 400 i     \\ \hline
+%\end{tabular}
+%\end{table}
+
+
+使用虚拟机搭建图\ref{fig:rscp-example1}的网络拓扑，自治系统号为100的自治系统外的边界路由器通过安装了Linux系统的虚拟机运行软件路由器Quagga来，自治系统号为100的自治系统内部部署RSCP-iBGP系统，自治系统号为100的自治系统内的边界路由器通过安装了Linux系统的虚拟机运行修改后的软件路由器Quagga-Route-Client来模拟，自治系统号为100的自治系统内的Route-Server路由器通过安装了Linux系统的虚拟机运行修改后的软件路由器Quagga-Route-Server来模拟。仍需要在R1、R2、C1上使用Route-map过滤更新策略，来配置BGP策略，使得从R1宣告给C1的路由MED值=10，从R2宣告给C2的路由MED=5，从R2宣告给C3的路由MED=6，从R1收到的Prefix192.168.1.0/24的路由信息经过C1的入站策略后该路由的Weight值改为150，通过iBGP协议传输的iBGP路由信息Local Preference默认为100。则当R3向外宣告192.168.1.0/24和192.168.2.0/24时，自治系统号为100的自治系统内Route-Server路由器上存储的Public-Loc-RIB见表\ref{tab:pub}。 因为192.168.1.0/24和192.168.2.0/24前缀的最优路由与Weight相关的仅有C1边界路由器，则Route-Server仅存储了针对C1的Private-Loc-RIB，见表\ref{tab:pri}。
 
 \begin{table}[]
 \centering
@@ -111,7 +135,7 @@ Network     & \begin{tabular}[c]{@{}c@{}}Received\\ iBGP-Peer\end{tabular} & Nex
 
 \subsection{路由计算集中优化}
 
-在图\ref{fig:rscp-example-fm}的拓扑条件下，路由策略配置使得从R1宣告给C1的路由MED值=10，从R2宣告给C2的路由MED=5，从R2宣告给C3的路由MED=6，从R1收到的Prefix192.168.1.0/24的路由信息经过C1的入站策略后该路由的Weight值改为150，通过iBGP协议传输的iBGP路由信息Local Preference默认为100（路由比较过程中如果LocPrf值未设置，默认为100）。则当R3向外宣告192.168.1.0/24和192.168.2.0/24前缀时，C1、C2、C3分别根据自己收到的路由和路由策略，分别计算最优路由。最后，C1针对192.168.1.0/24前缀计算出的最优路由是C1-R1-R3, C1针对192.168.2.0/24前缀计算出的最优路由是C1-R3;C2针对192.168.1.0/24前缀计算出的最优路由是C2-R2-R3, C2针对192.168.2.0/24前缀计算出的最优路由是C2-C1-R3;C3针对192.168.1.0/24前缀计算出的最优路由是C2-R2-R3, C3针对192.168.2.0/24前缀计算出的最优路由是C3-C1-R3，总共计算了6次。若自治系统内有N台边界路由器，当一条更新路由传到自治系统时，每台边界路由器均需进行路由更新流程，如果最优路由发生变化则需要进行再次宣告，进入路由收敛过程，在这个过程中路由计算最少N次，最多N\verb+*+(N-1)/2次。
+在图\ref{fig:rscp-example-fm}的拓扑条件下，路由策略配置使得从R1宣告给C1的路由MED值=10，从R2宣告给C2的路由MED=5，从R2宣告给C3的路由MED=6，从R1收到的Prefix192.168.1.0/24的路由信息经过C1的入站策略后该路由的Weight值改为150，通过iBGP协议传输的iBGP路由信息Local Preference默认为100（路由比较过程中如果LocPrf值未设置，默认为100）。则当R3向外宣告192.168.1.0/24和192.168.2.0/24前缀时，C1、C2、C3分别根据自己收到的路由和路由策略，分别计算最优路由。最后，C1针对192.168.1.0/24前缀计算出的最优路由是C1-R1-R3, C1针对192.168.2.0/24前缀计算出的最优路由是C1-R3;C2针对192.168.1.0/24前缀计算出的最优路由是C2-R2-R3, C2针对192.168.2.0/24前缀计算出的最优路由是C2-C1-R3;C3针对192.168.1.0/24前缀计算出的最优路由是C3-R2-R3, C3针对192.168.2.0/24前缀计算出的最优路由是C3-C1-R3，总共计算了6次。若自治系统内有N台边界路由器，当一条更新路由传到自治系统时，每台边界路由器均需进行路由更新流程，如果最优路由发生变化则需要进行再次宣告，进入路由收敛过程，在这个过程中路由计算最少N次，最多N\verb+*+(N-1)/2次。
 
 
 在图\ref{fig:rscp-example1}的拓扑条件下，路由策略配置使得从R1宣告给C1的路由MED值=10，从R2宣告给C2的路由MED=5，从R2宣告给C3的路由MED=6，从R1收到的Prefix192.168.1.0/24的路由信息经过C1的入站策略后该路由的Weight值改为150，通过iBGP协议传输的iBGP路由信息Local Preference默认为100（路由比较过程中如果LocPrf值未设置，默认为100）。则当R3向外宣告192.168.1.0/24和192.168.2.0/24前缀时，C1、C2、C3分别根据自己收到的路由传输到路由集中控制平台Route-Server路由器，Route-Server根据全部的路由信息为每一台边界路由器计算最优路由。针对192.168.1.0/24前缀，Route-Server通过Public-RIB-In计算一次得到C2和C3的最优出口，再通过针对C1的Private-RIB-In计算一次得到C1的最优出口。针对192.168.2.0/24前缀，Route-Server仅需计算一次即可得到C1、C2、C3的最优路由，因为192.168.2.0/24最优路由的决定性条件是Aspath长度，这属于所有边界路由器相同的可比路由属性。因为不存在路由收敛，所以当一条新路由传输到自治系统，RSCP-iBGP系统路由计算最少1次，最多N次。相比有路由收敛的传统分布式路由，本文提出的RSCP-iBGP将当新路由到达自治系统时，自治系统内的路由计算次数平均优化了一个数量级。
@@ -119,9 +143,20 @@ Network     & \begin{tabular}[c]{@{}c@{}}Received\\ iBGP-Peer\end{tabular} & Nex
 \subsection{基于全部路由且无MED值引起的路由震荡}
 
 
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=0.75\textwidth]{rscp-fixmed}
+  \caption{RSCP-iBGP系统下解决RR引起的MED路由震荡的实验拓扑}
+  \label{fig:rscp-fixmed}
+\end{figure}
 
 
+本文提出的RSCP-iBGP系统中的复式路由计算，基于全部的路由进行计算。路由计算的过程采用集合排除法，当自治系统相同的时候，从Prefix的路由集合中删除MED值更大的路由，保证路由更新到达顺序不一致的情况下，最终当基于全部路由进行计算的时候，得到的最优路由是确定的。以RR路由反射引起的MED路由震荡为例，如图\ref{fig:rscp-fixmed}。
 
+通过虚拟机搭建图\ref{fig:rscp-fixmed}中右侧拓扑的网络环境，AS400的边界路由器向外宣告192.168.1.0/24前缀。通过查看Route-Server路由存储情况，可以发现AS400向外宣告的192.168.1.0/24路由信息通过AS100的三个入口A1、A2、B传输到Route-Server，最后存储进入Route-Server放入Public-Loc-RIB表中。最终Route-Server通过复式路由计算算法，因为从A2、B口传输到集中平台的路由来源于AS300，则根据集合消除法的原则，消除A2进入的路由。最终A1、A2、B的针对192.168.1.0/24前缀的最优出口根据IGPcost选择。
+
+该实验拓扑下，Route-Server上显示A1的针对192.168.1.0/24的最优出口为本身（AS200），A2的针对192.168.1.0/24的最优出口为A1，B的针对192.168.1.0/24的最优出口为本身（AS300）。实验结果证明，因为复式路由计算基于全部路由进行路由计算，且因为采取集合消除法非两两比较则不会发生MED路由震荡。
 
 
 
@@ -138,7 +173,7 @@ Network     & \begin{tabular}[c]{@{}c@{}}Received\\ iBGP-Peer\end{tabular} & Nex
 \subsection{测试平台介绍}
 测试平台使用协议测试系统工具PITSv3\cite{journals_chinaf_YinWJS08}（Protocol Integrated Test System Version 3），PITSv3内通过主测试部件和多个从测试部件，来模拟测试系统多网口的情况，每个测试部件可以连接一个真实的虚拟路由器，以此来构建测试系统连接的网络拓扑，从而实现对协议的一致性测试。PITSv3系统的体系结构见图\ref{fig:pitsv3}。
 
-本文中针对RSCP-iBGP系统的功能测试，依托安装在物理机器上的VMware Workstation Pro虚拟机管理软件，在VMware虚拟机管理软件中运行多台虚拟机，分别作为（安装PITSv3的Windows系统）测试系统和（运行RSCP-iBGP系统中的Route-Client软件路由器或者Route-Server软件路由器的CentOS系统）被测系统\cite{pitsv3}。
+本文中针对RSCP-iBGP系统的功能测试，依托安装在物理机器上的VMware Workstation Pro虚拟机管理软件，在VMware虚拟机管理软件中运行多台虚拟机，分别作为（安装PITSv3的Windows系统）测试系统和（运行RSCP-iBGP系统中的Route-Client软件路由器或者Route-Server软件路由器的Linux系统）被测系统\cite{pitsv3}。
 
 \subsection{一致性测试需求}
 
@@ -230,6 +265,23 @@ Network     & \begin{tabular}[c]{@{}c@{}}Received\\ iBGP-Peer\end{tabular} & Nex
 
 本文提出的RSCP-iBGP系统在自治系统内部有两种类型的路由器Route-Client边界路由器和Route-Server路由集中控制平台上的，Route-Client路由器有eBGP对等体和iBGP对等体，而Route-Server路由器仅有iBGP对等体。根据测试需求设计三组测试集共3组：Route-Client与eBGP邻居之间的一致性测试集如表\ref{tab:test1}、Route-Client与iBGP邻居之间的一致性测试集如表\ref{tab:test2}、Route-Server与iBGP邻居之间的一致性测试集如表\ref{tab:test3}。
 
+
+
+\subsection{测试结果及分析}
+
+
+\begin{figure}
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=0.8\textwidth]{test}
+  \caption{被测系统Route-Client与eBGP邻居之间测试集的测试结果图}
+  \label{fig:test}
+\end{figure}
+
+
+针对以上的测试需求和测试方案，本文对3组测试集进行了测试，被测系统Route-Client与eBGP邻居之间的测试软件中的结果如图\ref{fig:test}。3组测试集的测试例共12个进行测试，测试结果如表\ref{tab:res}，从表中我们可以看出测试例全部通过。RSCP-iBGP系统中的Route-Client路由器和Route-Server可以进行正常的BGP协议下的报文交互，Route-Client路由器收到eBGP路由，会将其经过入站策略且携带Weight属性的路由信息传输到路由集中平台上的Route-Server路由器，Route-Server会计算出每台边界路由器针对该Prefix的最优路由，并将其传输给域内的每一台边界路由器Route-Client，之后Route-Client将收到的iBGP路由宣告给所有的eBGP邻居，整个路由处理的流程在RSCP-iBGP系统中均正确无误，证明RSCP-iBGP系统实现与设计规范的一致性。
+
+
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 \begin{table}[]
@@ -246,9 +298,6 @@ Route-Server与iBGP邻居 & 4     & 0     \\
 \end{tabular}
 \end{table}
 
-\subsection{测试结果及分析}
-
-针对以上的测试需求和测试方案，本文对所有测试集中的测试例共12个进行测试，测试结果如表\ref{tab:res}，从表中我们可以看出测试例全部通过，RSCP-iBGP系统中的Route-Client路由器和Route-Server可以进行正常的BGP协议下的报文交互，Route-Client路由器收到eBGP路由，会将其经过入站策略且携带Weight属性的路由信息传输到路由集中平台上的Route-Server路由器，Route-Server会计算出每台边界路由器针对该Prefix的最优路由，并将其传输给域内的每一台边界路由器Route-Client，之后Route-Client将收到的iBGP路由宣告给所有的eBGP邻居，整个路由处理的流程在RSCP-iBGP系统中均正确无误，证明RSCP-iBGP系统实现与设计规范的一致性。
 
 \section{本章小结}
 
