@@ -238,7 +238,7 @@ RSCP-iBGP系统的一致性测试主要测试部署RSCP-iBGP系统的自治系�
 \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}Route-Client与\\ eBGP邻居\end{tabular}} & 建连测试   & \begin{tabular}[c]{@{}l@{}}Route-Client可以接收\\ eBGP邻居的主动连接\end{tabular}        \\
                                                                                 & 断连测试  & \begin{tabular}[c]{@{}l@{}}Route-Client可以处理\\ eBGP邻居的主动断连\end{tabular}        \\
                                                                                 & 前缀报文接收测试 & \begin{tabular}[c]{@{}l@{}}Route-Client可以收到\\ eBGP邻居的UPDATE报文\end{tabular}   \\
-                                                                                & 前缀报文处理测试 & \begin{tabular}[c]{@{}l@{}}Route-Client可将eBGP邻居\\ 的路由更新发给iBGP邻居\end{tabular} \\ \bottomrule
+                                                                                & 前缀报文处理测试 & \begin{tabular}[c]{@{}l@{}}Route-Client可将eBGP邻居的路由更新\\附加Weight属性发给iBGP邻居\end{tabular} \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -270,7 +270,7 @@ RSCP-iBGP系统的一致性测试主要测试部署RSCP-iBGP系统的自治系�
 \multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}Route-Client与\\ iBGP邻居\end{tabular}} & 建连测试   & \begin{tabular}[c]{@{}l@{}}Route-Client可以接收\\ iBGP邻居的主动连接\end{tabular}       \\
                                                                                 & 断连测试  & \begin{tabular}[c]{@{}l@{}}Route-Client可以处理\\ iBGP邻居的主动断连\end{tabular}       \\
                                                                                 & 前缀报文接收测试 & \begin{tabular}[c]{@{}l@{}}Route-Client可以收到\\ iBGP邻居的UPDATE报文\end{tabular}  \\
-                                                                                & 前缀报文处理测试 & \begin{tabular}[c]{@{}l@{}}Route-Client可将iBGP邻居\\ 的路由更新发给eBGP邻居\end{tabular} \\ \bottomrule
+                                                                                & 前缀报文处理测试 & \begin{tabular}[c]{@{}l@{}}Route-Client可将iBGP邻居\\ 的路由更新宣告给所有eBGP邻居\end{tabular} \\ \bottomrule
 \end{tabular}
 \end{table}
 
